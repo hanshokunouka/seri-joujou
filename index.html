@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>セリ上々</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
+<meta name="theme-color" content="#111111">
+<style>
+  /* スプラッシュ画面 */
+  #splash {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: #000;
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+    z-index: 9999;
+    transition: opacity 0.5s ease;
+  }
+  #splash img { width: 60%; max-width: 250px; height: auto; margin-bottom: 20px; }
+  #splash-title { color: white; font-size: 24px; font-weight: bold; letter-spacing: 2px; }
+
+  body { margin:0; font-family:sans-serif; background:#111; color:white; overflow-x:hidden; }
+  .header { padding:15px; background:#000; text-align:center; font-weight:bold; border-bottom:2px solid #e60012; position:sticky; top:0; z-index:100; font-size:20px; }
+  .container { padding:15px; max-width:500px; margin:0 auto; }
+  
+  .form-card { background:#1a1a1a; padding:15px; border-radius:15px; border:1px solid #333; margin-bottom:20px; }
+  .form-group { margin-bottom:12px; }
+  label { font-size:12px; color:#bbb; display:block; margin-bottom:5px; padding-left:2px; }
+  input, select, textarea { width:100%; padding:12px; box-sizing:border-box; border-radius:8px; border:1px solid #444; background:#222; color:white; font-size:16px; }
+  
+  .flex-row { display:flex; gap:10px; }
+  .flex-item { flex:1; }
+  button { cursor: pointer; border: none; }
+  .save-btn { width:100%; padding:15px; background:#e60012; color:white; border-radius:50px; font-weight:bold; font-size:18px; margin:10px 0; box-shadow: 0 4px 0 #8b0000; }
+  .save-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #8b0000; }
+
+  .stats-card { background:#222; padding:15px; border-radius:12px; border:1px solid #444; margin-bottom:20px; }
+  .stats-grid { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:5px; text-align:center; }
+  .stats-val { font-size:16px; font-weight:bold; color:#f1c40f; }
+  .stats-label { font-size:10px; color:#aaa; }
+
+  .search-card { background:#000; padding:15px; border-radius:12px; border:1px solid #e60012; margin-bottom:20px; }
+
+  .tool-row { display:flex; gap:8px; margin-bottom:20px; flex-wrap: wrap; }
+  .tool-btn { flex:1; padding:10px 5px; background:#333; color:#fff; border-radius:5px; font-size:11px; min-width:80px; }
+
+  .calf-card { background:#222; padding:15px; border-radius:12px; margin-bottom:12px; border-left:5px solid #e60012; }
+  .card-id { font-size:20px; font-weight:bold; color:#ff3333; margin-bottom:8px; }
+  .card-details { font-size:14px; line-height:1.7; color:#ddd; }
+  .card-price { color:#f1c40f; font-weight:bold; }
+  .delete-btn { background:#444; color:#fff; padding:5px 12px; border-radius:4px; font-size:12px; margin-top:10px; }
+</style>
+</head>
+<body>
+
+<div id="splash">
+  <img src="logo.png" alt="ロゴ">
+  <div id="splash-title">セリ上々</div>
+</div>
+
+<div class="header">セリ上々</div>
+
+<div class="container">
+  <div class="form-card">
+    <div class="form-group"><label>耳票番号</label><input type="number" id="earId" placeholder="下10桁/4桁"></div>
+    <div class="form-group"><label>生年月日</label><input type="date" id="birthDate"></div>
+    <div class="form-group"><label>性別</label><select id="gender"><option value="雄">雄</option><option value="雌">雌</option><option value="去勢">去勢</option></select></div>
+    <div class="flex-row">
+      <div class="form-group flex-item"><label>母の名前</label><input type="text" id="mother"></div>
+      <div class="form-group flex-item"><label>父の名前</label><input type="text" id="father"></div>
+    </div>
+    <div class="flex-row">
+      <div class="form-group flex-item"><label>日齢</label><input type="number" id="days"></div>
+      <div class="form-group flex-item"><label>体重(kg)</label><input type="number" id="weight"></div>
+    </div>
+    <div class="form-group"><label>販売価格(円)</label><input type="number" id="price"></div>
+    <div class="form-group"><label>メモ欄</label><textarea id="memo" rows="2"></textarea></div>
+    <button class="save-btn" onclick="saveData()">データを保存</button>
+  </div>
+
+  <div class="search-card">
+    <div style="font-size:14px; margin-bottom:10px; font-weight:bold; color:#e60012;">牛名で絞り込み</div>
+    <div class="flex-row">
+      <div class="form-group flex-item"><label>母名検索</label><input type="text" id="searchMother" oninput="renderList()" placeholder="母名..."></div>
+      <div class="form-group flex-item"><label>父名検索</label><input type="text" id="searchFather" oninput="renderList()" placeholder="父名..."></div>
+    </div>
+  </div>
+
+  <div class="stats-card">
+    <div id="statsTitle" style="font-size:12px; margin-bottom:8px; color:#aaa;">全データ平均</div>
+    <div class="stats-grid">
+      <div><div class="stats-label">平均日齢</div><div id="avgDays" class="stats-val">0</div></div>
+      <div><div class="stats-label">平均体重</div><div id="avgWeight" class="stats-val">0</div></div>
+      <div><div class="stats-label">平均価格</div><div id="avgPrice" class="stats-val">0</div></div>
+    </div>
+  </div>
+
+  <div class="tool-row">
+    <button class="tool-btn" onclick="exportCSV()">Excel出力</button>
+    <button class="tool-btn" onclick="exportBackup()">データ保存</button>
+    <button class="tool-btn" onclick="document.getElementById('importFile').click()">データ復元</button>
+  </div>
+  <input type="file" id="importFile" style="display:none" onchange="importBackup(event)">
+
+  <div id="calfList"></div>
+</div>
+
+<script>
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      const splash = document.getElementById('splash');
+      splash.style.opacity = '0';
+      setTimeout(() => { splash.style.display = 'none'; }, 500);
+    }, 2500);
+  });
+
+  const STORAGE_KEY = 'seri_joujou_v2';
+
+  function saveData() {
+    const fields = ['earId', 'birthDate', 'gender', 'mother', 'father', 'days', 'weight', 'price', 'memo'];
+    const data = { id: Date.now() };
+    fields.forEach(f => data[f] = document.getElementById(f).value);
+    if(!data.earId) { alert("耳票番号を入力してください"); return; }
+    let list = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    list.unshift(data);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    renderList();
+    fields.forEach(f => { if(f !== 'gender') document.getElementById(f).value = ""; });
+  }
+
+  function renderList() {
+    let list = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    const sMother = document.getElementById('searchMother').value.toLowerCase();
+    const sFather = document.getElementById('searchFather').value.toLowerCase();
+    
+    if(sMother || sFather) {
+      list = list.filter(c => (c.mother.toLowerCase().includes(sMother)) && (c.father.toLowerCase().includes(sFather)));
+      document.getElementById('statsTitle').innerText = "検索結果の平均";
+    } else {
+      document.getElementById('statsTitle').innerText = "全データ平均";
+    }
+
+    if(list.length > 0) {
+      const sumDays = list.reduce((a, b) => a + Number(b.days || 0), 0);
+      const sumWeight = list.reduce((a, b) => a + Number(b.weight || 0), 0);
+      const sumPrice = list.reduce((a, b) => a + Number(b.price || 0), 0);
+      document.getElementById('avgDays').innerText = Math.round(sumDays / list.length) + "日";
+      document.getElementById('avgWeight').innerText = Math.round(sumWeight / list.length) + "kg";
+      document.getElementById('avgPrice').innerText = "¥" + Math.round(sumPrice / list.length).toLocaleString();
+    } else {
+      document.getElementById('avgDays').innerText = "0"; document.getElementById('avgWeight').innerText = "0"; document.getElementById('avgPrice').innerText = "0";
+    }
+
+    const container = document.getElementById('calfList');
+    container.innerHTML = list.map(c => `
+      <div class="calf-card">
+        <div class="card-id">No. ${c.earId}</div>
+        <div class="card-details">
+          生年月日：${c.birthDate || '-'}<br>
+          性別：${c.gender} / 母：${c.mother || '-'} / 父：${c.father || '-'}<br>
+          日齢：${c.days || '-'}日 / 体重：${c.weight || '-'}kg<br>
+          価格：<span class="card-price">¥${Number(c.price || 0).toLocaleString()}</span><br>
+          メモ：${c.memo || '-'}
+        </div>
+        <button class="delete-btn" onclick="deleteData(${c.id})">削除</button>
+      </div>
+    `).join('');
+  }
+
+  function deleteData(id) {
+    if(confirm("削除しますか？")) {
+      let list = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(list.filter(c => c.id !== id)));
+      renderList();
+    }
+  }
+
+  function exportCSV() {
+    const list = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    if(!list.length) return;
+    let csv = "\uFEFF耳票番号,生年月日,性別,母,父,日齢,体重,価格,メモ\n";
+    list.forEach(c => { csv += `${c.earId},${c.birthDate},${c.gender},${c.mother},${c.father},${c.days},${c.weight},${c.price},${c.memo}\n`; });
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'セリ上々リスト.csv'; a.click();
+  }
+
+  function exportBackup() {
+    const data = localStorage.getItem(STORAGE_KEY);
+    if(!data) return;
+    const blob = new Blob([data], { type: 'application/json' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'セリ上々_バックアップ.json'; a.click();
+  }
+
+  function importBackup(e) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      if(confirm("データを復元しますか？")) {
+        localStorage.setItem(STORAGE_KEY, e.target.result);
+        renderList();
+      }
+    };
+    reader.readAsText(e.target.files[0]);
+  }
+
+  window.onload = renderList;
+  if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+</script>
+</body>
+</html>
