@@ -101,7 +101,7 @@
         <div class="form-group flex-item"><label>日齢</label><input type="number" id="days"></div>
         <div class="form-group flex-item"><label>体重(kg)</label><input type="number" id="weight"></div>
       </div>
-      <div class="form-group"><label>販売価格(円)</label><input type="number" id="price" placeholder="例: 600000"></div>
+      <div class="form-group"><label>販売価格（千円）</label><input type="number" id="price" placeholder="例: 600"></div>
       <div class="form-group"><label>メモ欄</label><textarea id="memo" rows="2"></textarea></div>
       <button class="save-btn" onclick="saveData()">データを保存</button>
     </div>
@@ -111,7 +111,7 @@
 <div id="listPage" class="page">
   <div class="container">
     <div class="search-card">
-      <div style="font-size:14px; margin-bottom:10px; font-weight:bold; color:#e60012;">牛名で絞り込み</div>
+      <div style="font-size:14px; margin-bottom:10px; font-weight:bold; color:#e60012;">検索絞り込み</div>
       <div class="form-group"><label>上場日検索</label><input type="date" id="searchListingDate" onchange="renderList()"></div>
       <div class="flex-row">
         <div class="form-group flex-item"><label>父名検索</label><input type="text" id="searchFather" oninput="renderList()" placeholder="父名..."></div>
@@ -142,14 +142,13 @@
 </div>
 
 <script>
-  // 価格を「千円」表記に変換する関数
+  // 表示用フォーマット（千円付与）
   function formatPrice(val) {
-    if (!val || val == 0) return "￥0千円";
-    const kien = Math.floor(Number(val) / 1000);
-    return "￥" + kien.toLocaleString() + "千円";
+    if (val === undefined || val === null || val === "") return "-";
+    return "￥" + Number(val).toLocaleString() + "千円";
   }
 
-  const STORAGE_KEY = 'seri_joujou_v4';
+  const STORAGE_KEY = 'seri_joujou_v5'; // 保存形式変更のためキーを新しくします
 
   window.addEventListener('load', () => {
     setTimeout(() => {
@@ -207,7 +206,7 @@
       const sumPrice = list.reduce((a, b) => a + Number(b.price || 0), 0);
       document.getElementById('avgDays').innerText = Math.round(sumDays / list.length) + "日";
       document.getElementById('avgWeight').innerText = Math.round(sumWeight / list.length) + "kg";
-      document.getElementById('avgPrice').innerText = formatPrice(sumPrice / list.length);
+      document.getElementById('avgPrice').innerText = formatPrice(Math.round(sumPrice / list.length));
     } else {
       document.getElementById('avgDays').innerText = "0";
       document.getElementById('avgWeight').innerText = "0";
@@ -215,14 +214,18 @@
     }
 
     const container = document.getElementById('calfList');
+    // 項目の順番: ①耳票番号②上場年月日③生年月日④性別⑤父の名前⑥母の名前⑦日齢⑧体重⑨価格⑩メモ欄
     container.innerHTML = list.map(c => `
       <div class="calf-card">
         <div class="card-id">No. ${c.earId}</div>
         <div class="card-details">
           上場年月日：${c.listingDate || '-'}<br>
           生年月日：${c.birthDate || '-'}<br>
-          性別：${c.gender} / 母：${c.mother || '-'} / 父：${c.father || '-'}<br>
-          日齢：${c.days || '-'}日 / 体重：${c.weight || '-'}kg<br>
+          性別：${c.gender}<br>
+          父の名前：${c.father || '-'}<br>
+          母の名前：${c.mother || '-'}<br>
+          日齢：${c.days || '-'}日<br>
+          体重：${c.weight || '-'}kg<br>
           価格：<span class="card-price">${formatPrice(c.price)}</span><br>
           メモ：${c.memo || '-'}
         </div>
@@ -242,8 +245,8 @@
   function exportCSV() {
     const list = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
     if(!list.length) return;
-    let csv = "\uFEFF上場年月日,耳標番号,生年月日,性別,母,父,日齢,体重,価格,メモ\n";
-    list.forEach(c => { csv += `${c.listingDate},${c.earId},${c.birthDate},${c.gender},${c.mother},${c.father},${c.days},${c.weight},${c.price},${c.memo}\n`; });
+    let csv = "\uFEFF耳票番号,上場年月日,生年月日,性別,父名,母名,日齢,体重,価格(千円),メモ\n";
+    list.forEach(c => { csv += `${c.earId},${c.listingDate},${c.birthDate},${c.gender},${c.father},${c.mother},${c.days},${c.weight},${c.price},${c.memo}\n`; });
     downloadFile(csv, 'セリ上々リスト.csv', 'text/csv');
   }
 
