@@ -15,10 +15,8 @@
     justify-content: center; align-items: center; z-index: 9999;
     transition: opacity 0.5s ease;
   }
-  #splash img { width: 60%; max-width: 250px; height: auto; } /* logo.pngのみ表示 */
-  /* スプラッシュテキストは削除しました */
+  #splash img { width: 60%; max-width: 250px; height: auto; }
 
-  /* 基本スタイル */
   body { margin:0; font-family:sans-serif; background:#111; color:white; overflow-x:hidden; }
   .header {
     padding:15px; background:#000; text-align:center; font-weight:bold;
@@ -31,7 +29,6 @@
   }
   .container { padding:15px; max-width:500px; margin:0 auto; }
   
-  /* フォーム共通スタイル */
   .form-card, .search-card, .stats-card, .tool-section {
     background:#1a1a1a; padding:15px; border-radius:15px; border:1px solid #333; margin-bottom:20px;
   }
@@ -52,23 +49,15 @@
   }
   .save-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #8b0000; }
 
-  /* 検索・統計 */
   .stats-card { background:#222; padding:15px; border-radius:12px; border:1px solid #444; margin-bottom:20px; }
   .stats-grid { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:5px; text-align:center; }
   .stats-val { font-size:16px; font-weight:bold; color:#f1c40f; }
   .stats-label { font-size:10px; color:#aaa; }
 
   .search-card { background:#000; padding:15px; border-radius:12px; border:1px solid #e60012; margin-bottom:20px; }
-  .search-card label { color:#ddd; }
-
   .tool-row { display:flex; gap:8px; margin-bottom:20px; flex-wrap: wrap; }
   .tool-btn { flex:1; padding:10px 5px; background:#333; color:#fff; border-radius:5px; font-size:11px; min-width:80px; }
 
-  /* リスト表示 */
-  .calf-list-container {
-    padding:15px; /* コンテナ全体のパディング */
-    margin-top:20px;
-  }
   .calf-card {
     background:#222; padding:15px; border-radius:12px; margin-bottom:12px;
     border-left:5px solid #e60012; position:relative;
@@ -81,7 +70,6 @@
     font-size:12px; margin-top:10px;
   }
 
-  /* ページ切り替えの表示/非表示 */
   .page { display:none; }
   .page.active { display:block; }
 </style>
@@ -102,7 +90,7 @@
   <div class="container">
     <div class="form-card">
       <div class="form-group"><label>上場年月日</label><input type="date" id="listingDate"></div>
-      <div class="form-group"><label>耳標番号</label><input type="number" id="earId" placeholder="下10桁/4桁"></div>
+      <div class="form-group"><label>耳票番号</label><input type="number" id="earId" placeholder="下10桁/4桁"></div>
       <div class="form-group"><label>生年月日</label><input type="date" id="birthDate"></div>
       <div class="form-group"><label>性別</label><select id="gender"><option value="去勢">去勢</option><option value="雌">雌</option><option value="雄">雄</option></select></div>
       <div class="flex-row">
@@ -113,7 +101,7 @@
         <div class="form-group flex-item"><label>日齢</label><input type="number" id="days"></div>
         <div class="form-group flex-item"><label>体重(kg)</label><input type="number" id="weight"></div>
       </div>
-      <div class="form-group"><label>販売価格(円)</label><input type="number" id="price"></div>
+      <div class="form-group"><label>販売価格(円)</label><input type="number" id="price" placeholder="例: 600000"></div>
       <div class="form-group"><label>メモ欄</label><textarea id="memo" rows="2"></textarea></div>
       <button class="save-btn" onclick="saveData()">データを保存</button>
     </div>
@@ -124,7 +112,7 @@
   <div class="container">
     <div class="search-card">
       <div style="font-size:14px; margin-bottom:10px; font-weight:bold; color:#e60012;">牛名で絞り込み</div>
-      <div class="form-group"><label>上場日検索</label><input type="date" id="searchListingDate" onchange="renderList()" placeholder="上場日..."></div>
+      <div class="form-group"><label>上場日検索</label><input type="date" id="searchListingDate" onchange="renderList()"></div>
       <div class="flex-row">
         <div class="form-group flex-item"><label>父名検索</label><input type="text" id="searchFather" oninput="renderList()" placeholder="父名..."></div>
         <div class="form-group flex-item"><label>母名検索</label><input type="text" id="searchMother" oninput="renderList()" placeholder="母名..."></div>
@@ -154,67 +142,54 @@
 </div>
 
 <script>
-  const STORAGE_KEY = 'seri_joujou_v4'; // データ構造変更のためキーを更新
-  let currentPage = 'inputPage'; // 現在表示中のページ
+  // 価格を「千円」表記に変換する関数
+  function formatPrice(val) {
+    if (!val || val == 0) return "￥0千円";
+    const kien = Math.floor(Number(val) / 1000);
+    return "￥" + kien.toLocaleString() + "千円";
+  }
 
-  // スプラッシュ画面の制御
+  const STORAGE_KEY = 'seri_joujou_v4';
+
   window.addEventListener('load', () => {
     setTimeout(() => {
       const splash = document.getElementById('splash');
       splash.style.opacity = '0';
       setTimeout(() => { splash.style.display = 'none'; }, 500);
-    }, 2500); // 2.5秒表示
-    renderList(); // 初回読み込みでリストも更新しておく
+    }, 2500);
+    renderList();
   });
 
-  // ページ表示切り替え
   function showPage(pageId) {
-    document.querySelectorAll('.page').forEach(page => {
-      page.classList.remove('active');
-    });
+    document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
     document.getElementById(pageId).classList.add('active');
-    currentPage = pageId;
-    if (pageId === 'listPage') {
-      renderList(); // 一覧ページに切り替わるたびにリストを再描画
-    }
+    if (pageId === 'listPage') renderList();
   }
 
-  // データ保存
   function saveData() {
     const fields = ['listingDate', 'earId', 'birthDate', 'gender', 'mother', 'father', 'days', 'weight', 'price', 'memo'];
     const data = { id: Date.now() };
     fields.forEach(f => data[f] = document.getElementById(f).value);
     
-    if(!data.earId) { alert("耳標番号は必須です"); return; }
-
+    if(!data.earId) { alert("耳票番号は必須です"); return; }
     let list = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-    list.unshift(data); // 新しいデータを先頭に追加
+    list.unshift(data);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
     alert("データを保存しました！");
-
-    // フォームをリセット
     fields.forEach(f => {
-      const element = document.getElementById(f);
-      if (element.tagName === 'SELECT') {
-        element.value = '去勢'; // 性別はデフォルト値に戻す
-      } else if (element.type === 'date') {
-        element.value = ''; // 日付は空に
-      } else {
-        element.value = '';
-      }
+      const el = document.getElementById(f);
+      if (f === 'gender') el.value = '去勢';
+      else el.value = '';
     });
-    renderList(); // リストも更新
+    renderList();
   }
 
-  // リスト表示と検索、統計計算
   function renderList() {
     let list = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-    
-    const sListingDate = document.getElementById('searchListingDate') ? document.getElementById('searchListingDate').value : '';
-    const sMother = document.getElementById('searchMother') ? document.getElementById('searchMother').value.toLowerCase() : '';
-    const sFather = document.getElementById('searchFather') ? document.getElementById('searchFather').value.toLowerCase() : '';
+    const sListingDate = document.getElementById('searchListingDate')?.value || '';
+    const sMother = document.getElementById('searchMother')?.value.toLowerCase() || '';
+    const sFather = document.getElementById('searchFather')?.value.toLowerCase() || '';
 
-    // フィルタリング
     if(sListingDate || sMother || sFather) {
       list = list.filter(c => 
         (!sListingDate || c.listingDate === sListingDate) &&
@@ -226,18 +201,17 @@
       document.getElementById('statsTitle').innerText = "全データ平均";
     }
 
-    // 統計計算
     if(list.length > 0) {
       const sumDays = list.reduce((a, b) => a + Number(b.days || 0), 0);
       const sumWeight = list.reduce((a, b) => a + Number(b.weight || 0), 0);
       const sumPrice = list.reduce((a, b) => a + Number(b.price || 0), 0);
       document.getElementById('avgDays').innerText = Math.round(sumDays / list.length) + "日";
       document.getElementById('avgWeight').innerText = Math.round(sumWeight / list.length) + "kg";
-      document.getElementById('avgPrice').innerText = "¥" + Math.round(sumPrice / list.length).toLocaleString();
+      document.getElementById('avgPrice').innerText = formatPrice(sumPrice / list.length);
     } else {
       document.getElementById('avgDays').innerText = "0";
       document.getElementById('avgWeight').innerText = "0";
-      document.getElementById('avgPrice').innerText = "0";
+      document.getElementById('avgPrice').innerText = "￥0千円";
     }
 
     const container = document.getElementById('calfList');
@@ -249,7 +223,7 @@
           生年月日：${c.birthDate || '-'}<br>
           性別：${c.gender} / 母：${c.mother || '-'} / 父：${c.father || '-'}<br>
           日齢：${c.days || '-'}日 / 体重：${c.weight || '-'}kg<br>
-          価格：<span class="card-price">¥${Number(c.price || 0).toLocaleString()}</span><br>
+          価格：<span class="card-price">${formatPrice(c.price)}</span><br>
           メモ：${c.memo || '-'}
         </div>
         <button class="delete-btn" onclick="deleteData(${c.id})">削除</button>
@@ -257,7 +231,6 @@
     `).join('');
   }
 
-  // データ削除
   function deleteData(id) {
     if(confirm("このデータを削除しますか？")) {
       let list = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
@@ -266,58 +239,42 @@
     }
   }
 
-  // Excel用出力 (CSV)
   function exportCSV() {
     const list = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-    if(!list.length) { alert("データがありません。"); return; }
+    if(!list.length) return;
     let csv = "\uFEFF上場年月日,耳標番号,生年月日,性別,母,父,日齢,体重,価格,メモ\n";
-    list.forEach(c => {
-      csv += `${c.listingDate},${c.earId},${c.birthDate},${c.gender},${c.mother},${c.father},${c.days},${c.weight},${c.price},${c.memo}\n`;
-    });
+    list.forEach(c => { csv += `${c.listingDate},${c.earId},${c.birthDate},${c.gender},${c.mother},${c.father},${c.days},${c.weight},${c.price},${c.memo}\n`; });
     downloadFile(csv, 'セリ上々リスト.csv', 'text/csv');
   }
 
-  // バックアップ保存 (JSON)
   function exportBackup() {
     const data = localStorage.getItem(STORAGE_KEY);
-    if(!data || data === "[]") { alert("データがありません。"); return; }
+    if(!data) return;
     downloadFile(data, 'セリ上々_バックアップ.json', 'application/json');
   }
 
-  // バックアップ復元
   function importBackup(e) {
     const reader = new FileReader();
     reader.onload = function(e) {
-      try {
-        const importedData = JSON.parse(e.target.result);
-        if (!Array.isArray(importedData)) throw new Error("不正なファイル形式です。");
-
-        if(confirm("現在のデータは上書きされます。データを復元しますか？")) {
-          localStorage.setItem(STORAGE_KEY, e.target.result);
-          renderList();
-          alert("データが復元されました！");
-        }
-      } catch (error) {
-        alert("ファイルの読み込みに失敗しました。正しいJSONファイルを選択してください。");
-        console.error("Import error:", error);
+      if(confirm("データを復元しますか？")) {
+        localStorage.setItem(STORAGE_KEY, e.target.result);
+        renderList();
+        alert("復元完了！");
       }
     };
     reader.readAsText(e.target.files[0]);
   }
 
-  // ファイルダウンロード共通関数
   function downloadFile(content, name, type) {
     const blob = new Blob([content], { type });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = name;
-    document.body.appendChild(a); // Androidで動かない対策
+    document.body.appendChild(a);
     a.click();
-    document.body.removeChild(a); // 後処理
-    URL.revokeObjectURL(a.href);
+    document.body.removeChild(a);
   }
 
-  // サービスワーカー登録
   if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 </script>
 </body>
