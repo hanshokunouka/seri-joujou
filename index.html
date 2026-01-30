@@ -65,10 +65,10 @@
   .card-id { font-size:20px; font-weight:bold; color:#ff3333; margin-bottom:8px; }
   .card-details { font-size:14px; line-height:1.7; color:#ddd; }
   .card-price { color:#f1c40f; font-weight:bold; }
-  .delete-btn {
-    background:#444; color:#fff; padding:5px 12px; border-radius:4px;
-    font-size:12px; margin-top:10px;
-  }
+  
+  .action-row { display:flex; gap:10px; margin-top:10px; }
+  .edit-btn { background:#2980b9; color:white; padding:8px 15px; border-radius:4px; font-size:12px; flex:1; }
+  .delete-btn { background:#444; color:#fff; padding:8px 15px; border-radius:4px; font-size:12px; flex:1; }
 
   .page { display:none; }
   .page.active { display:block; }
@@ -82,15 +82,15 @@
 
 <div class="header">
   <button class="header-btn" onclick="showPage('inputPage')">入力</button>
-  <span>セリ上々</span>
+  <span id="mainTitle">セリ上々</span>
   <button class="header-btn" onclick="showPage('listPage')">一覧</button>
 </div>
 
 <div id="inputPage" class="page active">
   <div class="container">
     <div class="form-card">
-      <div class="form-group"><label>上場年月日</label><input type="date" id="listingDate"></div>
-      <div class="form-group"><label>耳票番号</label><input type="number" id="earId" placeholder="下10桁/4桁"></div>
+      <input type="hidden" id="editId"> <div class="form-group"><label>上場年月日</label><input type="date" id="listingDate"></div>
+      <div class="form-group"><label>耳標番号</label><input type="number" id="earId" placeholder="下10桁/4桁"></div>
       <div class="form-group"><label>生年月日</label><input type="date" id="birthDate"></div>
       <div class="form-group"><label>性別</label><select id="gender"><option value="去勢">去勢</option><option value="雌">雌</option><option value="雄">雄</option></select></div>
       <div class="flex-row">
@@ -103,7 +103,8 @@
       </div>
       <div class="form-group"><label>販売価格（千円）</label><input type="number" id="price" placeholder="例: 600"></div>
       <div class="form-group"><label>メモ欄</label><textarea id="memo" rows="2"></textarea></div>
-      <button class="save-btn" onclick="saveData()">データを保存</button>
+      <button class="save-btn" id="submitBtn" onclick="saveData()">データを保存</button>
+      <button class="delete-btn" id="cancelEditBtn" style="display:none; width:100%; margin-top:5px; background:#666;" onclick="cancelEdit()">編集をキャンセル</button>
     </div>
   </div>
 </div>
@@ -142,13 +143,12 @@
 </div>
 
 <script>
-  // 表示用フォーマット（千円付与）
   function formatPrice(val) {
     if (val === undefined || val === null || val === "") return "-";
     return "￥" + Number(val).toLocaleString() + "千円";
   }
 
-  const STORAGE_KEY = 'seri_joujou_v5'; // 保存形式変更のためキーを新しくします
+  const STORAGE_KEY = 'seri_joujou_v5';
 
   window.addEventListener('load', () => {
     setTimeout(() => {
@@ -165,22 +165,63 @@
     if (pageId === 'listPage') renderList();
   }
 
+  // データ保存（新規・上書き両用）
   function saveData() {
     const fields = ['listingDate', 'earId', 'birthDate', 'gender', 'mother', 'father', 'days', 'weight', 'price', 'memo'];
-    const data = { id: Date.now() };
+    const editId = document.getElementById('editId').value;
+    const data = { id: editId ? Number(editId) : Date.now() };
     fields.forEach(f => data[f] = document.getElementById(f).value);
     
-    if(!data.earId) { alert("耳票番号は必須です"); return; }
+    if(!data.earId) { alert("耳標番号は必須です"); return; }
+
     let list = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-    list.unshift(data);
+
+    if (editId) {
+      // 編集モード：既存データを差し替え
+      const index = list.findIndex(item => item.id === data.id);
+      if (index !== -1) list[index] = data;
+      alert("データを更新しました！");
+    } else {
+      // 新規モード
+      list.unshift(data);
+      alert("データを保存しました！");
+    }
+
     localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-    alert("データを保存しました！");
+    cancelEdit(); // フォームリセット
+    renderList();
+  }
+
+  // 編集モードへの切り替え
+  function editData(id) {
+    let list = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    const data = list.find(item => item.id === id);
+    if (!data) return;
+
+    // フォームに値をセット
+    const fields = ['listingDate', 'earId', 'birthDate', 'gender', 'mother', 'father', 'days', 'weight', 'price', 'memo'];
+    fields.forEach(f => document.getElementById(f).value = data[f] || "");
+    document.getElementById('editId').value = data.id;
+
+    // ボタンの見た目を変更
+    document.getElementById('submitBtn').innerText = "更新して保存";
+    document.getElementById('cancelEditBtn').style.display = "block";
+    document.getElementById('mainTitle').innerText = "データ編集";
+
+    showPage('inputPage');
+  }
+
+  function cancelEdit() {
+    const fields = ['listingDate', 'earId', 'birthDate', 'gender', 'mother', 'father', 'days', 'weight', 'price', 'memo'];
     fields.forEach(f => {
       const el = document.getElementById(f);
       if (f === 'gender') el.value = '去勢';
       else el.value = '';
     });
-    renderList();
+    document.getElementById('editId').value = "";
+    document.getElementById('submitBtn').innerText = "データを保存";
+    document.getElementById('cancelEditBtn').style.display = "none";
+    document.getElementById('mainTitle').innerText = "セリ上々";
   }
 
   function renderList() {
@@ -214,7 +255,6 @@
     }
 
     const container = document.getElementById('calfList');
-    // 項目の順番: ①耳票番号②上場年月日③生年月日④性別⑤父の名前⑥母の名前⑦日齢⑧体重⑨価格⑩メモ欄
     container.innerHTML = list.map(c => `
       <div class="calf-card">
         <div class="card-id">No. ${c.earId}</div>
@@ -229,7 +269,10 @@
           価格：<span class="card-price">${formatPrice(c.price)}</span><br>
           メモ：${c.memo || '-'}
         </div>
-        <button class="delete-btn" onclick="deleteData(${c.id})">削除</button>
+        <div class="action-row">
+          <button class="edit-btn" onclick="editData(${c.id})">編集</button>
+          <button class="delete-btn" onclick="deleteData(${c.id})">削除</button>
+        </div>
       </div>
     `).join('');
   }
@@ -245,7 +288,7 @@
   function exportCSV() {
     const list = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
     if(!list.length) return;
-    let csv = "\uFEFF耳票番号,上場年月日,生年月日,性別,父名,母名,日齢,体重,価格(千円),メモ\n";
+    let csv = "\uFEFF耳標番号,上場年月日,生年月日,性別,父名,母名,日齢,体重,価格(千円),メモ\n";
     list.forEach(c => { csv += `${c.earId},${c.listingDate},${c.birthDate},${c.gender},${c.father},${c.mother},${c.days},${c.weight},${c.price},${c.memo}\n`; });
     downloadFile(csv, 'セリ上々リスト.csv', 'text/csv');
   }
