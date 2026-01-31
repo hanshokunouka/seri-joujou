@@ -55,14 +55,18 @@
   .stats-label { font-size:10px; color:#aaa; }
 
   .search-card { background:#000; padding:15px; border-radius:12px; border:1px solid #e60012; margin-bottom:20px; }
-  .tool-row { display:flex; gap:8px; margin-bottom:20px; flex-wrap: wrap; }
-  .tool-btn { flex:1; padding:10px 5px; background:#333; color:#fff; border-radius:5px; font-size:11px; min-width:80px; }
+  .tool-row { display:flex; gap:8px; margin-bottom:10px; flex-wrap: wrap; }
+  .tool-btn { flex:1; padding:10px 5px; background:#333; color:#fff; border-radius:5px; font-size:11px; min-width:75px; }
 
   .calf-card {
     background:#222; padding:15px; border-radius:12px; margin-bottom:12px;
-    border-left:5px solid #e60012; position:relative;
+    position:relative; border-left:8px solid #444;
   }
-  .card-id { font-size:20px; font-weight:bold; color:#ff3333; margin-bottom:8px; }
+  .border-castrated { border-left-color: #0000ff !important; }
+  .border-female { border-left-color: #ffc0cb !important; }
+  .border-male { border-left-color: #008000 !important; }
+
+  .card-id { font-size:20px; font-weight:bold; color:#fff; margin-bottom:8px; }
   .card-details { font-size:14px; line-height:1.7; color:#ddd; }
   .card-price { color:#f1c40f; font-weight:bold; }
   
@@ -72,6 +76,22 @@
 
   .page { display:none; }
   .page.active { display:block; }
+  .range-label { font-size: 11px; text-align: center; line-height: 40px; color: #888; }
+
+  @media print {
+    body { background: white !important; color: black !important; }
+    .header, .search-card, .tool-section, .action-row, .cancel-edit-btn, #splash { display: none !important; }
+    .container { width: 100% !important; max-width: none !important; padding: 0 !important; }
+    .calf-card { 
+      background: white !important; color: black !important; 
+      border: 1px solid #ccc !important; border-left: 8px solid !important; 
+      page-break-inside: avoid; margin-bottom: 20px !important;
+    }
+    .card-details { color: black !important; }
+    .card-id { color: #e60012 !important; }
+    .stats-card { background: #f9f9f9 !important; border: 1px solid #ccc !important; color: black !important; }
+    .stats-val { color: black !important; }
+  }
 </style>
 </head>
 <body>
@@ -89,9 +109,10 @@
 <div id="inputPage" class="page active">
   <div class="container">
     <div class="form-card">
-      <input type="hidden" id="editId"> <div class="form-group"><label>上場年月日</label><input type="date" id="listingDate"></div>
-      <div class="form-group"><label>耳標番号</label><input type="number" id="earId" placeholder="下10桁/4桁"></div>
-      <div class="form-group"><label>生年月日</label><input type="date" id="birthDate"></div>
+      <input type="hidden" id="editId">
+      <div class="form-group"><label>上場年月日</label><input type="tel" id="listingDate" placeholder="20250131" oninput="formatInputDate(this)"></div>
+      <div class="form-group"><label>耳標番号</label><input type="number" id="earId" placeholder="耳標番号"></div>
+      <div class="form-group"><label>生年月日</label><input type="tel" id="birthDate" placeholder="20250131" oninput="formatInputDate(this)"></div>
       <div class="form-group"><label>性別</label><select id="gender"><option value="去勢">去勢</option><option value="雌">雌</option><option value="雄">雄</option></select></div>
       <div class="flex-row">
         <div class="form-group flex-item"><label>父の名前</label><input type="text" id="father"></div>
@@ -113,7 +134,14 @@
   <div class="container">
     <div class="search-card">
       <div style="font-size:14px; margin-bottom:10px; font-weight:bold; color:#e60012;">検索絞り込み</div>
-      <div class="form-group"><label>上場日検索</label><input type="date" id="searchListingDate" onchange="renderList()"></div>
+      <div class="form-group">
+        <label>上場日の範囲</label>
+        <div class="flex-row">
+          <input type="tel" id="searchStart" oninput="formatInputDate(this); renderList()" placeholder="開始日(20250101)" class="flex-item">
+          <div class="range-label">～</div>
+          <input type="tel" id="searchEnd" oninput="formatInputDate(this); renderList()" placeholder="終了日(20251231)" class="flex-item">
+        </div>
+      </div>
       <div class="flex-row">
         <div class="form-group flex-item"><label>父名検索</label><input type="text" id="searchFather" oninput="renderList()" placeholder="父名..."></div>
         <div class="form-group flex-item"><label>母名検索</label><input type="text" id="searchMother" oninput="renderList()" placeholder="母名..."></div>
@@ -132,8 +160,9 @@
     <div class="tool-section">
       <div class="tool-row">
         <button class="tool-btn" onclick="exportCSV()">Excel出力</button>
+        <button class="tool-btn" onclick="window.print()" style="background:#2ecc71;">PDF保存</button>
         <button class="tool-btn" onclick="exportBackup()">データ保存</button>
-        <button class="tool-btn" onclick="document.getElementById('importFile').click()">データ復元</button>
+        <button class="tool-btn" onclick="document.getElementById('importFile').click()">復元</button>
       </div>
       <input type="file" id="importFile" style="display:none" onchange="importBackup(event)">
     </div>
@@ -143,9 +172,22 @@
 </div>
 
 <script>
+  function formatInputDate(el) {
+    let val = el.value.replace(/\D/g, '');
+    if (val.length > 8) val = val.slice(0, 8);
+    let formatted = val;
+    if (val.length >= 5 && val.length <= 6) {
+      formatted = val.slice(0, 4) + '/' + val.slice(4);
+    } else if (val.length >= 7) {
+      formatted = val.slice(0, 4) + '/' + val.slice(4, 6) + '/' + val.slice(6);
+    }
+    el.value = formatted;
+  }
+
+  // 表示形式の修正：￥を削除
   function formatPrice(val) {
-    if (val === undefined || val === null || val === "") return "-";
-    return "￥" + Number(val).toLocaleString() + "千円";
+    if (val === undefined || val === null || val === "" || isNaN(val)) return "-";
+    return Number(val).toLocaleString() + "千円";
   }
 
   const STORAGE_KEY = 'seri_joujou_v5';
@@ -165,49 +207,36 @@
     if (pageId === 'listPage') renderList();
   }
 
-  // データ保存（新規・上書き両用）
   function saveData() {
     const fields = ['listingDate', 'earId', 'birthDate', 'gender', 'mother', 'father', 'days', 'weight', 'price', 'memo'];
     const editId = document.getElementById('editId').value;
     const data = { id: editId ? Number(editId) : Date.now() };
     fields.forEach(f => data[f] = document.getElementById(f).value);
     
-    if(!data.earId) { alert("耳標番号は必須です"); return; }
-
     let list = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-
     if (editId) {
-      // 編集モード：既存データを差し替え
       const index = list.findIndex(item => item.id === data.id);
       if (index !== -1) list[index] = data;
       alert("データを更新しました！");
     } else {
-      // 新規モード
       list.unshift(data);
       alert("データを保存しました！");
     }
-
     localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-    cancelEdit(); // フォームリセット
+    cancelEdit();
     renderList();
   }
 
-  // 編集モードへの切り替え
   function editData(id) {
     let list = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
     const data = list.find(item => item.id === id);
     if (!data) return;
-
-    // フォームに値をセット
     const fields = ['listingDate', 'earId', 'birthDate', 'gender', 'mother', 'father', 'days', 'weight', 'price', 'memo'];
     fields.forEach(f => document.getElementById(f).value = data[f] || "");
     document.getElementById('editId').value = data.id;
-
-    // ボタンの見た目を変更
     document.getElementById('submitBtn').innerText = "更新して保存";
     document.getElementById('cancelEditBtn').style.display = "block";
     document.getElementById('mainTitle').innerText = "データ編集";
-
     showPage('inputPage');
   }
 
@@ -226,38 +255,55 @@
 
   function renderList() {
     let list = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-    const sListingDate = document.getElementById('searchListingDate')?.value || '';
+    list.sort((a, b) => {
+      const dateA = (a.listingDate || "").replace(/\//g, '') || "00000000";
+      const dateB = (b.listingDate || "").replace(/\//g, '') || "00000000";
+      return dateB.localeCompare(dateA);
+    });
+
+    const sStart = (document.getElementById('searchStart')?.value || "").replace(/\//g, '');
+    const sEnd = (document.getElementById('searchEnd')?.value || "").replace(/\//g, '');
     const sMother = document.getElementById('searchMother')?.value.toLowerCase() || '';
     const sFather = document.getElementById('searchFather')?.value.toLowerCase() || '';
 
-    if(sListingDate || sMother || sFather) {
-      list = list.filter(c => 
-        (!sListingDate || c.listingDate === sListingDate) &&
-        (!sMother || (c.mother && c.mother.toLowerCase().includes(sMother))) && 
-        (!sFather || (c.father && c.father.toLowerCase().includes(sFather)))
-      );
+    if(sStart || sEnd || sMother || sFather) {
+      list = list.filter(c => {
+        const cDate = (c.listingDate || "").replace(/\//g, '');
+        const matchRange = (!sStart || cDate >= sStart) && (!sEnd || cDate <= sEnd);
+        const matchMother = (!sMother || (c.mother && c.mother.toLowerCase().includes(sMother)));
+        const matchFather = (!sFather || (c.father && c.father.toLowerCase().includes(sFather)));
+        return matchRange && matchMother && matchFather;
+      });
       document.getElementById('statsTitle').innerText = "検索結果の平均";
     } else {
       document.getElementById('statsTitle').innerText = "全データ平均";
     }
 
     if(list.length > 0) {
-      const sumDays = list.reduce((a, b) => a + Number(b.days || 0), 0);
-      const sumWeight = list.reduce((a, b) => a + Number(b.weight || 0), 0);
-      const sumPrice = list.reduce((a, b) => a + Number(b.price || 0), 0);
-      document.getElementById('avgDays').innerText = Math.round(sumDays / list.length) + "日";
-      document.getElementById('avgWeight').innerText = Math.round(sumWeight / list.length) + "kg";
-      document.getElementById('avgPrice').innerText = formatPrice(Math.round(sumPrice / list.length));
+      const validDays = list.filter(c => c.days && !isNaN(c.days));
+      const validWeight = list.filter(c => c.weight && !isNaN(c.weight));
+      const validPrice = list.filter(c => c.price && !isNaN(c.price));
+      const avgD = validDays.length ? Math.round(validDays.reduce((a, b) => a + Number(b.days), 0) / validDays.length) : 0;
+      const avgW = validWeight.length ? Math.round(validWeight.reduce((a, b) => a + Number(b.weight), 0) / validWeight.length) : 0;
+      const avgP = validPrice.length ? Math.round(validPrice.reduce((a, b) => a + Number(b.price), 0) / validPrice.length) : 0;
+      document.getElementById('avgDays').innerText = avgD + "日";
+      document.getElementById('avgWeight').innerText = avgW + "kg";
+      document.getElementById('avgPrice').innerText = formatPrice(avgP);
     } else {
       document.getElementById('avgDays').innerText = "0";
       document.getElementById('avgWeight').innerText = "0";
-      document.getElementById('avgPrice').innerText = "￥0千円";
+      document.getElementById('avgPrice').innerText = "0千円";
     }
 
     const container = document.getElementById('calfList');
-    container.innerHTML = list.map(c => `
-      <div class="calf-card">
-        <div class="card-id">No. ${c.earId}</div>
+    container.innerHTML = list.map(c => {
+      let borderClass = "";
+      if (c.gender === "去勢") borderClass = "border-castrated";
+      else if (c.gender === "雌") borderClass = "border-female";
+      else if (c.gender === "雄") borderClass = "border-male";
+      return `
+      <div class="calf-card ${borderClass}">
+        <div class="card-id">No. ${c.earId || '-'}</div>
         <div class="card-details">
           上場年月日：${c.listingDate || '-'}<br>
           生年月日：${c.birthDate || '-'}<br>
@@ -274,7 +320,7 @@
           <button class="delete-btn" onclick="deleteData(${c.id})">削除</button>
         </div>
       </div>
-    `).join('');
+    `}).join('');
   }
 
   function deleteData(id) {
