@@ -26,7 +26,7 @@
   .page { display:none; }
   .page.active { display:block; }
 
-  /* 保存データ一覧（カード形式を復元） */
+  /* 保存データ一覧（カード形式） */
   .calf-card {
     background:#222; padding:15px; border-radius:12px; margin-bottom:12px;
     position:relative; border-left:8px solid #444;
@@ -45,7 +45,7 @@
   .stats-grid { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:5px; text-align:center; }
   .stats-val { font-size:16px; font-weight:bold; color:#f1c40f; }
 
-  /* PDF/印刷用（非表示・横向き） */
+  /* PDF/印刷用（非表示・A4横向き） */
   #printArea { display: none; }
 
   @media print {
@@ -99,7 +99,7 @@
 <div id="listPage" class="page">
   <div class="container">
     <div class="search-card">
-      <label>検索・絞り込み</label>
+      <label>上場年月日で検索・絞り込み</label>
       <div class="flex-row" style="margin-bottom:10px;">
         <input type="tel" id="searchStart" oninput="formatInputDate(this); renderList()" placeholder="開始日" class="flex-item">
         <input type="tel" id="searchEnd" oninput="formatInputDate(this); renderList()" placeholder="終了日" class="flex-item">
@@ -199,11 +199,16 @@
     document.querySelectorAll('#inputPage input, #inputPage textarea').forEach(i => i.value = "");
     document.getElementById('gender').value = "去勢";
     document.getElementById('editId').value = "";
+    document.getElementById('submitBtn').innerText = "データを保存";
   }
 
   function renderList() {
     let list = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-    list.sort((a,b) => (b.listingDate||"").replace(/\//g,'').localeCompare((a.listingDate||"").replace(/\//g,'')));
+    list.sort((a,b) => {
+      const dateA = (a.listingDate || "").replace(/\//g,'');
+      const dateB = (b.listingDate || "").replace(/\//g,'');
+      return dateB.localeCompare(dateA);
+    });
 
     const sS = (document.getElementById('searchStart').value || "").replace(/\//g,'');
     const sE = (document.getElementById('searchEnd').value || "").replace(/\//g,'');
@@ -211,8 +216,12 @@
     const sM = document.getElementById('searchMother').value.toLowerCase();
 
     currentFilteredList = list.filter(c => {
-      const d = (c.listingDate || "").replace(/\//g,'');
-      return (!sS || d >= sS) && (!sE || d <= sE) && (!sF || (c.father||"").toLowerCase().includes(sF)) && (!sM || (c.mother||"").toLowerCase().includes(sM));
+      const targetDate = (c.listingDate || "").replace(/\//g,'');
+      const matchStart = !sS || (targetDate >= sS);
+      const matchEnd = !sE || (targetDate <= sE);
+      const matchFather = !sF || (c.father || "").toLowerCase().includes(sF);
+      const matchMother = !sM || (c.mother || "").toLowerCase().includes(sM);
+      return matchStart && matchEnd && matchFather && matchMother;
     });
 
     const sum = (arr, key) => arr.filter(i => i[key] && !isNaN(i[key])).reduce((a, b) => a + Number(b[key]), 0);
@@ -285,7 +294,7 @@
 
   function openPrintWindow() {
     if(!currentFilteredList.length) { alert("データがありません"); return; }
-    setTimeout(() => { window.print(); }, 200);
+    setTimeout(() => { window.print(); }, 300);
   }
 
   function exportExcel() {
