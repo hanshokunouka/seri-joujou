@@ -14,7 +14,7 @@
   #splash img { width: 60%; max-width: 250px; }
   .header { padding:15px; background:#000; text-align:center; font-weight:bold; border-bottom:2px solid #e60012; position:sticky; top:0; z-index:100; display:flex; justify-content:space-between; align-items:center; }
   .header-btn { background:none; color:white; border:none; font-size:16px; font-weight:bold; cursor:pointer; }
-  .container { padding:15px; max-width:100%; margin:0 auto; }
+  .container { padding:15px; max-width:500px; margin:0 auto; }
   .form-card, .search-card, .stats-card, .tool-section { background:#1a1a1a; padding:15px; border-radius:15px; border:1px solid #333; margin-bottom:20px; }
   .form-group { margin-bottom:12px; }
   label { font-size:12px; color:#bbb; display:block; margin-bottom:5px; }
@@ -26,19 +26,26 @@
   .page { display:none; }
   .page.active { display:block; }
 
-  /* 一覧表示（カード）のスタイル */
-  .calf-card { background:#222; padding:12px; border-radius:10px; margin-bottom:10px; border-left:8px solid #444; }
+  /* 一覧表示（以前のカード形式を復元） */
+  .calf-card {
+    background:#222; padding:15px; border-radius:12px; margin-bottom:12px;
+    position:relative; border-left:8px solid #444;
+  }
   .border-castrated { border-left-color: #0000ff !important; }
   .border-female { border-left-color: #ffc0cb !important; }
   .border-male { border-left-color: #008000 !important; }
-  .card-id { font-size:18px; font-weight:bold; color:#fff; }
+  .card-id { font-size:20px; font-weight:bold; color:#fff; margin-bottom:8px; }
+  .card-details { font-size:14px; line-height:1.7; color:#ddd; }
   .card-price { color:#f1c40f; font-weight:bold; }
+  .action-row { display:flex; gap:10px; margin-top:10px; }
+  .edit-btn { background:#2980b9; color:white; padding:8px 15px; border-radius:4px; font-size:12px; flex:1; }
+  .delete-btn { background:#444; color:#fff; padding:8px 15px; border-radius:4px; font-size:12px; flex:1; }
 
   /* 統計情報 */
   .stats-grid { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:5px; text-align:center; }
   .stats-val { font-size:16px; font-weight:bold; color:#f1c40f; }
 
-  /* PDF/印刷用テーブル（通常時は非表示） */
+  /* PDF/印刷用（非表示） */
   #printArea { display: none; }
 
   @media print {
@@ -50,9 +57,6 @@
     table { width: 100%; border-collapse: collapse; table-layout: fixed; }
     th, td { border: 1px solid black; padding: 4px 2px; font-size: 9px; text-align: center; word-wrap: break-word; color: black !important; }
     th { background: #eee !important; }
-    .tr-castrated { background-color: rgba(0,0,255,0.1) !important; }
-    .tr-female { background-color: rgba(255,192,203,0.1) !important; }
-    .tr-male { background-color: rgba(0,128,0,0.1) !important; }
   }
 </style>
 </head>
@@ -92,7 +96,7 @@
 <div id="listPage" class="page">
   <div class="container">
     <div class="search-card">
-      <label>上場日の範囲</label>
+      <label>上場日の範囲・検索</label>
       <div class="flex-row" style="margin-bottom:10px;">
         <input type="tel" id="searchStart" oninput="formatInputDate(this); renderList()" placeholder="開始日" class="flex-item">
         <input type="tel" id="searchEnd" oninput="formatInputDate(this); renderList()" placeholder="終了日" class="flex-item">
@@ -114,7 +118,7 @@
     <div class="tool-section">
       <div class="tool-row" style="display:flex; gap:5px;">
         <button class="tool-btn" onclick="exportExcel()" style="background:#1f7244;">Excel出力</button>
-        <button class="tool-btn" onclick="window.print()" style="background:#2ecc71;">PDF保存</button>
+        <button class="tool-btn" onclick="openPrintWindow()" style="background:#2ecc71;">PDF保存</button>
         <button class="tool-btn" onclick="exportBackup()">データ保存</button>
         <button class="tool-btn" onclick="document.getElementById('importFile').click()">復元</button>
       </div>
@@ -152,7 +156,7 @@
 </div>
 
 <script>
-  let currentFilteredList = []; // 現在絞り込まれているリストを保持
+  let currentFilteredList = [];
 
   function formatInputDate(el) {
     let val = el.value.replace(/\D/g, '');
@@ -221,8 +225,6 @@
     document.getElementById('avgDays').innerText = avgD + "日";
     document.getElementById('avgWeight').innerText = avgW + "kg";
     document.getElementById('avgPrice').innerText = avgP + "千円";
-    
-    // PDF用隠しエリアにも反映
     document.getElementById('pAvgDays').innerText = avgD + "日";
     document.getElementById('pAvgWeight').innerText = avgW + "kg";
     document.getElementById('pAvgPrice').innerText = avgP + "千円";
@@ -230,23 +232,30 @@
     const listDiv = document.getElementById('calfList');
     listDiv.innerHTML = currentFilteredList.map(c => {
       let cls = c.gender === "去勢" ? "border-castrated" : c.gender === "雌" ? "border-female" : "border-male";
-      return `<div class="calf-card ${cls}">
-        <div style="display:flex; justify-content:space-between;">
-          <span class="card-id">No. ${c.earId || '-'}</span>
-          <span class="card-price">${c.price ? c.price + "千円" : "-"}</span>
+      return `
+      <div class="calf-card ${cls}">
+        <div class="card-id">No. ${c.earId || '-'}</div>
+        <div class="card-details">
+          上場年月日：${c.listingDate || '-'}<br>
+          生年月日：${c.birthDate || '-'}<br>
+          性別：${c.gender}<br>
+          父の名前：${c.father || '-'}<br>
+          母の名前：${c.mother || '-'}<br>
+          日齢：${c.days || '-'}日<br>
+          体重：${c.weight || '-'}kg<br>
+          価格：<span class="card-price">${c.price ? c.price + '千円' : '-'}</span><br>
+          メモ：${c.memo || '-'}
         </div>
-        <div style="font-size:12px; margin-top:5px; color:#ccc;">${c.listingDate} | ${c.gender} | 父:${c.father} | 母:${c.mother}</div>
-        <div style="margin-top:8px; display:flex; gap:10px;">
-          <button class="tool-btn" onclick="editData(${c.id})" style="background:#2980b9;">編集</button>
-          <button class="tool-btn" onclick="deleteData(${c.id})">削除</button>
+        <div class="action-row">
+          <button class="edit-btn" onclick="editData(${c.id})">編集</button>
+          <button class="delete-btn" onclick="deleteData(${c.id})">削除</button>
         </div>
       </div>`;
     }).join('');
 
-    // 印刷用テーブルの作成
     const pBody = document.getElementById('printTableBody');
     pBody.innerHTML = currentFilteredList.map((c, i) => `
-      <tr class="${c.gender === '去勢'?'tr-castrated':c.gender === '雌'?'tr-female':'tr-male'}">
+      <tr>
         <td>${i + 1}</td>
         <td>${c.listingDate || ''}</td>
         <td>${c.earId || ''}</td>
@@ -273,6 +282,11 @@
   }
 
   function deleteData(id) { if(confirm("削除しますか？")) { let list = JSON.parse(localStorage.getItem(STORAGE_KEY)); localStorage.setItem(STORAGE_KEY, JSON.stringify(list.filter(i=>i.id!==id))); renderList(); } }
+
+  function openPrintWindow() {
+    if(!currentFilteredList.length) { alert("データがありません"); return; }
+    setTimeout(() => { window.print(); }, 200);
+  }
 
   function exportExcel() {
     if(!currentFilteredList.length) return;
