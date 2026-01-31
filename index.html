@@ -8,97 +8,57 @@
 <link rel="apple-touch-icon" href="icon.png">
 <meta name="theme-color" content="#111111">
 <style>
-  /* スプラッシュ画面 */
-  #splash {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: #000; display: flex; flex-direction: column;
-    justify-content: center; align-items: center; z-index: 9999;
-    transition: opacity 0.5s ease;
-  }
-  #splash img { width: 60%; max-width: 250px; height: auto; }
-
+  /* 基本デザイン */
   body { margin:0; font-family:sans-serif; background:#111; color:white; overflow-x:hidden; }
-  .header {
-    padding:15px; background:#000; text-align:center; font-weight:bold;
-    border-bottom:2px solid #e60012; position:sticky; top:0; z-index:100;
-    font-size:20px; display:flex; justify-content:space-between; align-items:center;
-  }
-  .header-btn {
-    background:none; color:white; border:none; font-size:16px; font-weight:bold;
-    padding: 0 10px; cursor:pointer;
-  }
-  .container { padding:15px; max-width:500px; margin:0 auto; }
-  
-  .form-card, .search-card, .stats-card, .tool-section {
-    background:#1a1a1a; padding:15px; border-radius:15px; border:1px solid #333; margin-bottom:20px;
-  }
+  #splash { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: flex; justify-content: center; align-items: center; z-index: 9999; transition: opacity 0.5s; }
+  #splash img { width: 60%; max-width: 250px; }
+  .header { padding:15px; background:#000; text-align:center; font-weight:bold; border-bottom:2px solid #e60012; position:sticky; top:0; z-index:100; display:flex; justify-content:space-between; align-items:center; }
+  .header-btn { background:none; color:white; border:none; font-size:16px; font-weight:bold; cursor:pointer; }
+  .container { padding:15px; max-width:100%; margin:0 auto; }
+  .form-card, .search-card, .stats-card, .tool-section { background:#1a1a1a; padding:15px; border-radius:15px; border:1px solid #333; margin-bottom:20px; }
   .form-group { margin-bottom:12px; }
-  label { font-size:12px; color:#bbb; display:block; margin-bottom:5px; padding-left:2px; }
-  input, select, textarea {
-    width:100%; padding:12px; box-sizing:border-box; border-radius:8px;
-    border:1px solid #444; background:#222; color:white; font-size:16px;
-  }
-  
+  label { font-size:12px; color:#bbb; display:block; margin-bottom:5px; }
+  input, select, textarea { width:100%; padding:12px; border-radius:8px; border:1px solid #444; background:#222; color:white; font-size:16px; box-sizing:border-box; }
   .flex-row { display:flex; gap:10px; }
   .flex-item { flex:1; }
-  button { cursor: pointer; border: none; }
-  .save-btn {
-    width:100%; padding:15px; background:#e60012; color:white;
-    border-radius:50px; font-weight:bold; font-size:18px; margin:10px 0;
-    box-shadow: 0 4px 0 #8b0000;
-  }
-  .save-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #8b0000; }
+  .save-btn { width:100%; padding:15px; background:#e60012; color:white; border-radius:50px; font-weight:bold; font-size:18px; margin:10px 0; border:none; box-shadow: 0 4px 0 #8b0000; cursor:pointer; }
+  .tool-btn { flex:1; padding:10px 5px; background:#333; color:#fff; border-radius:5px; font-size:11px; min-width:70px; cursor:pointer; border:none; }
+  .page { display:none; }
+  .page.active { display:block; }
 
-  .stats-card { background:#222; padding:15px; border-radius:12px; border:1px solid #444; margin-bottom:20px; }
-  .stats-grid { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:5px; text-align:center; }
-  .stats-val { font-size:16px; font-weight:bold; color:#f1c40f; }
-  .stats-label { font-size:10px; color:#aaa; }
-
-  .search-card { background:#000; padding:15px; border-radius:12px; border:1px solid #e60012; margin-bottom:20px; }
-  .tool-row { display:flex; gap:8px; margin-bottom:10px; flex-wrap: wrap; }
-  .tool-btn { flex:1; padding:10px 5px; background:#333; color:#fff; border-radius:5px; font-size:11px; min-width:75px; }
-
-  .calf-card {
-    background:#222; padding:15px; border-radius:12px; margin-bottom:12px;
-    position:relative; border-left:8px solid #444;
-  }
+  /* 一覧表示（カード）のスタイル */
+  .calf-card { background:#222; padding:12px; border-radius:10px; margin-bottom:10px; border-left:8px solid #444; }
   .border-castrated { border-left-color: #0000ff !important; }
   .border-female { border-left-color: #ffc0cb !important; }
   .border-male { border-left-color: #008000 !important; }
-
-  .card-id { font-size:20px; font-weight:bold; color:#fff; margin-bottom:8px; }
-  .card-details { font-size:14px; line-height:1.7; color:#ddd; }
+  .card-id { font-size:18px; font-weight:bold; color:#fff; }
   .card-price { color:#f1c40f; font-weight:bold; }
-  
-  .action-row { display:flex; gap:10px; margin-top:10px; }
-  .edit-btn { background:#2980b9; color:white; padding:8px 15px; border-radius:4px; font-size:12px; flex:1; }
-  .delete-btn { background:#444; color:#fff; padding:8px 15px; border-radius:4px; font-size:12px; flex:1; }
 
-  .page { display:none; }
-  .page.active { display:block; }
-  .range-label { font-size: 11px; text-align: center; line-height: 40px; color: #888; }
+  /* 統計情報 */
+  .stats-grid { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:5px; text-align:center; }
+  .stats-val { font-size:16px; font-weight:bold; color:#f1c40f; }
+
+  /* PDF/印刷用テーブル（通常時は非表示） */
+  #printArea { display: none; }
 
   @media print {
+    @page { size: A4; margin: 10mm; }
     body { background: white !important; color: black !important; }
-    .header, .search-card, .tool-section, .action-row, .cancel-edit-btn, #splash { display: none !important; }
-    .container { width: 100% !important; max-width: none !important; padding: 0 !important; }
-    .calf-card { 
-      background: white !important; color: black !important; 
-      border: 1px solid #ccc !important; border-left: 8px solid !important; 
-      page-break-inside: avoid; margin-bottom: 20px !important;
-    }
-    .card-details { color: black !important; }
-    .card-id { color: #e60012 !important; }
-    .stats-card { background: #f9f9f9 !important; border: 1px solid #ccc !important; color: black !important; }
-    .stats-val { color: black !important; }
+    #splash, .header, .search-card, .tool-section, .stats-card, #calfList, .page, #inputPage { display: none !important; }
+    #printArea { display: block !important; width: 100%; }
+    .print-stats { display: flex; justify-content: flex-end; gap: 20px; font-size: 12px; margin-bottom: 5px; color: black !important; }
+    table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    th, td { border: 1px solid black; padding: 4px 2px; font-size: 9px; text-align: center; word-wrap: break-word; color: black !important; }
+    th { background: #eee !important; }
+    .tr-castrated { background-color: rgba(0,0,255,0.1) !important; }
+    .tr-female { background-color: rgba(255,192,203,0.1) !important; }
+    .tr-male { background-color: rgba(0,128,0,0.1) !important; }
   }
 </style>
 </head>
 <body>
 
-<div id="splash">
-  <img src="logo.png" alt="ロゴ">
-</div>
+<div id="splash"><img src="logo.png" alt="ロゴ"></div>
 
 <div class="header">
   <button class="header-btn" onclick="showPage('inputPage')">入力</button>
@@ -112,7 +72,7 @@
       <input type="hidden" id="editId">
       <div class="form-group"><label>上場年月日</label><input type="tel" id="listingDate" placeholder="20250131" oninput="formatInputDate(this)"></div>
       <div class="form-group"><label>耳標番号</label><input type="number" id="earId" placeholder="耳標番号"></div>
-      <div class="form-group"><label>生年月日</label><input type="tel" id="birthDate" placeholder="20250131" oninput="formatInputDate(this)"></div>
+      <div class="form-group"><label>生年月日</label><input type="tel" id="birthDate" placeholder="20240301" oninput="formatInputDate(this)"></div>
       <div class="form-group"><label>性別</label><select id="gender"><option value="去勢">去勢</option><option value="雌">雌</option><option value="雄">雄</option></select></div>
       <div class="flex-row">
         <div class="form-group flex-item"><label>父の名前</label><input type="text" id="father"></div>
@@ -122,10 +82,9 @@
         <div class="form-group flex-item"><label>日齢</label><input type="number" id="days"></div>
         <div class="form-group flex-item"><label>体重(kg)</label><input type="number" id="weight"></div>
       </div>
-      <div class="form-group"><label>販売価格（千円）</label><input type="number" id="price" placeholder="例: 600"></div>
+      <div class="form-group"><label>販売価格（千円）</label><input type="number" id="price" placeholder="例: 650"></div>
       <div class="form-group"><label>メモ欄</label><textarea id="memo" rows="2"></textarea></div>
       <button class="save-btn" id="submitBtn" onclick="saveData()">データを保存</button>
-      <button class="delete-btn" id="cancelEditBtn" style="display:none; width:100%; margin-top:5px; background:#666;" onclick="cancelEdit()">編集をキャンセル</button>
     </div>
   </div>
 </div>
@@ -133,23 +92,18 @@
 <div id="listPage" class="page">
   <div class="container">
     <div class="search-card">
-      <div style="font-size:14px; margin-bottom:10px; font-weight:bold; color:#e60012;">検索絞り込み</div>
-      <div class="form-group">
-        <label>上場日の範囲</label>
-        <div class="flex-row">
-          <input type="tel" id="searchStart" oninput="formatInputDate(this); renderList()" placeholder="開始日(20250101)" class="flex-item">
-          <div class="range-label">～</div>
-          <input type="tel" id="searchEnd" oninput="formatInputDate(this); renderList()" placeholder="終了日(20251231)" class="flex-item">
-        </div>
+      <label>上場日の範囲</label>
+      <div class="flex-row" style="margin-bottom:10px;">
+        <input type="tel" id="searchStart" oninput="formatInputDate(this); renderList()" placeholder="開始日" class="flex-item">
+        <input type="tel" id="searchEnd" oninput="formatInputDate(this); renderList()" placeholder="終了日" class="flex-item">
       </div>
       <div class="flex-row">
-        <div class="form-group flex-item"><label>父名検索</label><input type="text" id="searchFather" oninput="renderList()" placeholder="父名..."></div>
-        <div class="form-group flex-item"><label>母名検索</label><input type="text" id="searchMother" oninput="renderList()" placeholder="母名..."></div>
+        <input type="text" id="searchFather" oninput="renderList()" placeholder="父名検索" class="flex-item">
+        <input type="text" id="searchMother" oninput="renderList()" placeholder="母名検索" class="flex-item">
       </div>
     </div>
 
     <div class="stats-card">
-      <div id="statsTitle" style="font-size:12px; margin-bottom:8px; color:#aaa;">全データ平均</div>
       <div class="stats-grid">
         <div><div class="stats-label">平均日齢</div><div id="avgDays" class="stats-val">0</div></div>
         <div><div class="stats-label">平均体重</div><div id="avgWeight" class="stats-val">0</div></div>
@@ -158,8 +112,8 @@
     </div>
 
     <div class="tool-section">
-      <div class="tool-row">
-        <button class="tool-btn" onclick="exportCSV()">Excel出力</button>
+      <div class="tool-row" style="display:flex; gap:5px;">
+        <button class="tool-btn" onclick="exportExcel()" style="background:#1f7244;">Excel出力</button>
         <button class="tool-btn" onclick="window.print()" style="background:#2ecc71;">PDF保存</button>
         <button class="tool-btn" onclick="exportBackup()">データ保存</button>
         <button class="tool-btn" onclick="document.getElementById('importFile').click()">復元</button>
@@ -171,200 +125,175 @@
   </div>
 </div>
 
+<div id="printArea">
+  <div class="print-stats">
+    <span>平均日齢: <b id="pAvgDays"></b></span>
+    <span>平均体重: <b id="pAvgWeight"></b></span>
+    <span>平均価格: <b id="pAvgPrice"></b></span>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:5%">番号</th>
+        <th style="width:12%">上場日</th>
+        <th style="width:15%">耳標番号</th>
+        <th style="width:12%">生年月日</th>
+        <th style="width:8%">性別</th>
+        <th style="width:10%">父の名前</th>
+        <th style="width:10%">母の名前</th>
+        <th style="width:6%">日齢</th>
+        <th style="width:6%">体重</th>
+        <th style="width:10%">価格</th>
+        <th style="width:6%">メモ</th>
+      </tr>
+    </thead>
+    <tbody id="printTableBody"></tbody>
+  </table>
+</div>
+
 <script>
+  let currentFilteredList = []; // 現在絞り込まれているリストを保持
+
   function formatInputDate(el) {
     let val = el.value.replace(/\D/g, '');
     if (val.length > 8) val = val.slice(0, 8);
-    let formatted = val;
-    if (val.length >= 5 && val.length <= 6) {
-      formatted = val.slice(0, 4) + '/' + val.slice(4);
-    } else if (val.length >= 7) {
-      formatted = val.slice(0, 4) + '/' + val.slice(4, 6) + '/' + val.slice(6);
-    }
-    el.value = formatted;
-  }
-
-  // 表示形式の修正：￥を削除
-  function formatPrice(val) {
-    if (val === undefined || val === null || val === "" || isNaN(val)) return "-";
-    return Number(val).toLocaleString() + "千円";
+    let f = val;
+    if (val.length >= 5 && val.length <= 6) f = val.slice(0, 4) + '/' + val.slice(4);
+    else if (val.length >= 7) f = val.slice(0, 4) + '/' + val.slice(4, 6) + '/' + val.slice(6);
+    el.value = f;
   }
 
   const STORAGE_KEY = 'seri_joujou_v5';
 
   window.addEventListener('load', () => {
-    setTimeout(() => {
-      const splash = document.getElementById('splash');
-      splash.style.opacity = '0';
-      setTimeout(() => { splash.style.display = 'none'; }, 500);
-    }, 2500);
+    setTimeout(() => { document.getElementById('splash').style.opacity = '0'; setTimeout(() => document.getElementById('splash').style.display='none', 500); }, 2000);
     renderList();
   });
 
-  function showPage(pageId) {
-    document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
-    document.getElementById(pageId).classList.add('active');
-    if (pageId === 'listPage') renderList();
+  function showPage(p) {
+    document.querySelectorAll('.page').forEach(x => x.classList.remove('active'));
+    document.getElementById(p).classList.add('active');
+    if(p==='listPage') renderList();
   }
 
   function saveData() {
     const fields = ['listingDate', 'earId', 'birthDate', 'gender', 'mother', 'father', 'days', 'weight', 'price', 'memo'];
-    const editId = document.getElementById('editId').value;
-    const data = { id: editId ? Number(editId) : Date.now() };
+    const id = document.getElementById('editId').value;
+    const data = { id: id ? Number(id) : Date.now() };
     fields.forEach(f => data[f] = document.getElementById(f).value);
-    
     let list = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-    if (editId) {
-      const index = list.findIndex(item => item.id === data.id);
-      if (index !== -1) list[index] = data;
-      alert("データを更新しました！");
-    } else {
-      list.unshift(data);
-      alert("データを保存しました！");
-    }
+    if(id) { let idx = list.findIndex(i => i.id === data.id); list[idx] = data; }
+    else { list.unshift(data); }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-    cancelEdit();
-    renderList();
+    alert("保存完了");
+    clearForm();
+    showPage('listPage');
   }
 
-  function editData(id) {
-    let list = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-    const data = list.find(item => item.id === id);
-    if (!data) return;
-    const fields = ['listingDate', 'earId', 'birthDate', 'gender', 'mother', 'father', 'days', 'weight', 'price', 'memo'];
-    fields.forEach(f => document.getElementById(f).value = data[f] || "");
-    document.getElementById('editId').value = data.id;
-    document.getElementById('submitBtn').innerText = "更新して保存";
-    document.getElementById('cancelEditBtn').style.display = "block";
-    document.getElementById('mainTitle').innerText = "データ編集";
-    showPage('inputPage');
-  }
-
-  function cancelEdit() {
-    const fields = ['listingDate', 'earId', 'birthDate', 'gender', 'mother', 'father', 'days', 'weight', 'price', 'memo'];
-    fields.forEach(f => {
-      const el = document.getElementById(f);
-      if (f === 'gender') el.value = '去勢';
-      else el.value = '';
-    });
+  function clearForm() {
+    document.querySelectorAll('#inputPage input, #inputPage textarea').forEach(i => i.value = "");
+    document.getElementById('gender').value = "去勢";
     document.getElementById('editId').value = "";
     document.getElementById('submitBtn').innerText = "データを保存";
-    document.getElementById('cancelEditBtn').style.display = "none";
-    document.getElementById('mainTitle').innerText = "セリ上々";
   }
 
   function renderList() {
     let list = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-    list.sort((a, b) => {
-      const dateA = (a.listingDate || "").replace(/\//g, '') || "00000000";
-      const dateB = (b.listingDate || "").replace(/\//g, '') || "00000000";
-      return dateB.localeCompare(dateA);
+    list.sort((a,b) => (b.listingDate||"").replace(/\//g,'').localeCompare((a.listingDate||"").replace(/\//g,'')));
+
+    const sS = (document.getElementById('searchStart').value || "").replace(/\//g,'');
+    const sE = (document.getElementById('searchEnd').value || "").replace(/\//g,'');
+    const sF = document.getElementById('searchFather').value.toLowerCase();
+    const sM = document.getElementById('searchMother').value.toLowerCase();
+
+    currentFilteredList = list.filter(c => {
+      const d = (c.listingDate || "").replace(/\//g,'');
+      return (!sS || d >= sS) && (!sE || d <= sE) && (!sF || (c.father||"").toLowerCase().includes(sF)) && (!sM || (c.mother||"").toLowerCase().includes(sM));
     });
 
-    const sStart = (document.getElementById('searchStart')?.value || "").replace(/\//g, '');
-    const sEnd = (document.getElementById('searchEnd')?.value || "").replace(/\//g, '');
-    const sMother = document.getElementById('searchMother')?.value.toLowerCase() || '';
-    const sFather = document.getElementById('searchFather')?.value.toLowerCase() || '';
+    const sum = (arr, key) => arr.filter(i => i[key] && !isNaN(i[key])).reduce((a, b) => a + Number(b[key]), 0);
+    const count = (arr, key) => arr.filter(i => i[key] && !isNaN(i[key])).length;
+    
+    const avgD = count(currentFilteredList, 'days') ? Math.round(sum(currentFilteredList, 'days') / count(currentFilteredList, 'days')) : 0;
+    const avgW = count(currentFilteredList, 'weight') ? Math.round(sum(currentFilteredList, 'weight') / count(currentFilteredList, 'weight')) : 0;
+    const avgP = count(currentFilteredList, 'price') ? Math.round(sum(currentFilteredList, 'price') / count(currentFilteredList, 'price')) : 0;
 
-    if(sStart || sEnd || sMother || sFather) {
-      list = list.filter(c => {
-        const cDate = (c.listingDate || "").replace(/\//g, '');
-        const matchRange = (!sStart || cDate >= sStart) && (!sEnd || cDate <= sEnd);
-        const matchMother = (!sMother || (c.mother && c.mother.toLowerCase().includes(sMother)));
-        const matchFather = (!sFather || (c.father && c.father.toLowerCase().includes(sFather)));
-        return matchRange && matchMother && matchFather;
-      });
-      document.getElementById('statsTitle').innerText = "検索結果の平均";
-    } else {
-      document.getElementById('statsTitle').innerText = "全データ平均";
-    }
+    document.getElementById('avgDays').innerText = avgD + "日";
+    document.getElementById('avgWeight').innerText = avgW + "kg";
+    document.getElementById('avgPrice').innerText = avgP + "千円";
+    
+    // PDF用隠しエリアにも反映
+    document.getElementById('pAvgDays').innerText = avgD + "日";
+    document.getElementById('pAvgWeight').innerText = avgW + "kg";
+    document.getElementById('pAvgPrice').innerText = avgP + "千円";
 
-    if(list.length > 0) {
-      const validDays = list.filter(c => c.days && !isNaN(c.days));
-      const validWeight = list.filter(c => c.weight && !isNaN(c.weight));
-      const validPrice = list.filter(c => c.price && !isNaN(c.price));
-      const avgD = validDays.length ? Math.round(validDays.reduce((a, b) => a + Number(b.days), 0) / validDays.length) : 0;
-      const avgW = validWeight.length ? Math.round(validWeight.reduce((a, b) => a + Number(b.weight), 0) / validWeight.length) : 0;
-      const avgP = validPrice.length ? Math.round(validPrice.reduce((a, b) => a + Number(b.price), 0) / validPrice.length) : 0;
-      document.getElementById('avgDays').innerText = avgD + "日";
-      document.getElementById('avgWeight').innerText = avgW + "kg";
-      document.getElementById('avgPrice').innerText = formatPrice(avgP);
-    } else {
-      document.getElementById('avgDays').innerText = "0";
-      document.getElementById('avgWeight').innerText = "0";
-      document.getElementById('avgPrice').innerText = "0千円";
-    }
-
-    const container = document.getElementById('calfList');
-    container.innerHTML = list.map(c => {
-      let borderClass = "";
-      if (c.gender === "去勢") borderClass = "border-castrated";
-      else if (c.gender === "雌") borderClass = "border-female";
-      else if (c.gender === "雄") borderClass = "border-male";
-      return `
-      <div class="calf-card ${borderClass}">
-        <div class="card-id">No. ${c.earId || '-'}</div>
-        <div class="card-details">
-          上場年月日：${c.listingDate || '-'}<br>
-          生年月日：${c.birthDate || '-'}<br>
-          性別：${c.gender}<br>
-          父の名前：${c.father || '-'}<br>
-          母の名前：${c.mother || '-'}<br>
-          日齢：${c.days || '-'}日<br>
-          体重：${c.weight || '-'}kg<br>
-          価格：<span class="card-price">${formatPrice(c.price)}</span><br>
-          メモ：${c.memo || '-'}
+    const listDiv = document.getElementById('calfList');
+    listDiv.innerHTML = currentFilteredList.map(c => {
+      let cls = c.gender === "去勢" ? "border-castrated" : c.gender === "雌" ? "border-female" : "border-male";
+      return `<div class="calf-card ${cls}">
+        <div style="display:flex; justify-content:space-between;">
+          <span class="card-id">No. ${c.earId || '-'}</span>
+          <span class="card-price">${c.price ? c.price + "千円" : "-"}</span>
         </div>
-        <div class="action-row">
-          <button class="edit-btn" onclick="editData(${c.id})">編集</button>
-          <button class="delete-btn" onclick="deleteData(${c.id})">削除</button>
+        <div style="font-size:12px; margin-top:5px; color:#ccc;">${c.listingDate} | ${c.gender} | 父:${c.father} | 母:${c.mother}</div>
+        <div style="margin-top:8px; display:flex; gap:10px;">
+          <button class="tool-btn" onclick="editData(${c.id})" style="background:#2980b9;">編集</button>
+          <button class="tool-btn" onclick="deleteData(${c.id})">削除</button>
         </div>
-      </div>
-    `}).join('');
+      </div>`;
+    }).join('');
+
+    // 印刷用テーブルの作成
+    const pBody = document.getElementById('printTableBody');
+    pBody.innerHTML = currentFilteredList.map((c, i) => `
+      <tr class="${c.gender === '去勢'?'tr-castrated':c.gender === '雌'?'tr-female':'tr-male'}">
+        <td>${i + 1}</td>
+        <td>${c.listingDate || ''}</td>
+        <td>${c.earId || ''}</td>
+        <td>${c.birthDate || ''}</td>
+        <td>${c.gender || ''}</td>
+        <td>${c.father || ''}</td>
+        <td>${c.mother || ''}</td>
+        <td>${c.days || ''}</td>
+        <td>${c.weight || ''}</td>
+        <td>${c.price ? c.price + '千円' : ''}</td>
+        <td>${c.memo || ''}</td>
+      </tr>
+    `).join('');
   }
 
-  function deleteData(id) {
-    if(confirm("このデータを削除しますか？")) {
-      let list = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(list.filter(c => c.id !== id)));
-      renderList();
-    }
+  function editData(id) {
+    let list = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    let data = list.find(i => i.id === id);
+    const fields = ['listingDate', 'earId', 'birthDate', 'gender', 'mother', 'father', 'days', 'weight', 'price', 'memo'];
+    fields.forEach(f => document.getElementById(f).value = data[f] || "");
+    document.getElementById('editId').value = data.id;
+    document.getElementById('submitBtn').innerText = "更新して保存";
+    showPage('inputPage');
   }
 
-  function exportCSV() {
-    const list = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-    if(!list.length) return;
-    let csv = "\uFEFF耳標番号,上場年月日,生年月日,性別,父名,母名,日齢,体重,価格(千円),メモ\n";
-    list.forEach(c => { csv += `${c.earId},${c.listingDate},${c.birthDate},${c.gender},${c.father},${c.mother},${c.days},${c.weight},${c.price},${c.memo}\n`; });
-    downloadFile(csv, 'セリ上々リスト.csv', 'text/csv');
+  function deleteData(id) { if(confirm("削除しますか？")) { let list = JSON.parse(localStorage.getItem(STORAGE_KEY)); localStorage.setItem(STORAGE_KEY, JSON.stringify(list.filter(i=>i.id!==id))); renderList(); } }
+
+  function exportExcel() {
+    if(!currentFilteredList.length) return;
+    let csv = "\uFEFF番号,上場年月日,耳標番号,生年月日,性別,父の名前,母の名前,日齢,体重,価格,メモ\n";
+    currentFilteredList.forEach((c, i) => {
+      csv += `${i+1},${c.listingDate},${c.earId},${c.birthDate},${c.gender},${c.father},${c.mother},${c.days},${c.weight},${c.price ? c.price + '千円' : ''},${c.memo}\n`;
+    });
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'セリ上々_出力.csv'; a.click();
   }
 
   function exportBackup() {
     const data = localStorage.getItem(STORAGE_KEY);
-    if(!data) return;
-    downloadFile(data, 'セリ上々_バックアップ.json', 'application/json');
+    const blob = new Blob([data], { type: 'application/json' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'seri_backup.json'; a.click();
   }
 
   function importBackup(e) {
     const reader = new FileReader();
-    reader.onload = function(e) {
-      if(confirm("データを復元しますか？")) {
-        localStorage.setItem(STORAGE_KEY, e.target.result);
-        renderList();
-        alert("復元完了！");
-      }
-    };
+    reader.onload = (e) => { if(confirm("復元しますか？")) { localStorage.setItem(STORAGE_KEY, e.target.result); renderList(); } };
     reader.readAsText(e.target.files[0]);
-  }
-
-  function downloadFile(content, name, type) {
-    const blob = new Blob([content], { type });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = name;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
   }
 
   if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
