@@ -8,7 +8,7 @@
 <link rel="apple-touch-icon" href="icon.png">
 <meta name="theme-color" content="#111111">
 <style>
-  /* 基本デザイン */
+  /* 基本デザイン（以前のまま） */
   body { margin:0; font-family:sans-serif; background:#111; color:white; overflow-x:hidden; }
   #splash { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: flex; justify-content: center; align-items: center; z-index: 9999; transition: opacity 0.5s; }
   #splash img { width: 60%; max-width: 250px; }
@@ -26,11 +26,8 @@
   .page { display:none; }
   .page.active { display:block; }
 
-  /* 一覧表示（以前のカード形式を復元） */
-  .calf-card {
-    background:#222; padding:15px; border-radius:12px; margin-bottom:12px;
-    position:relative; border-left:8px solid #444;
-  }
+  /* アプリ一覧表示（カード形式） */
+  .calf-card { background:#222; padding:15px; border-radius:12px; margin-bottom:12px; position:relative; border-left:8px solid #444; }
   .border-castrated { border-left-color: #0000ff !important; }
   .border-female { border-left-color: #ffc0cb !important; }
   .border-male { border-left-color: #008000 !important; }
@@ -38,25 +35,28 @@
   .card-details { font-size:14px; line-height:1.7; color:#ddd; }
   .card-price { color:#f1c40f; font-weight:bold; }
   .action-row { display:flex; gap:10px; margin-top:10px; }
-  .edit-btn { background:#2980b9; color:white; padding:8px 15px; border-radius:4px; font-size:12px; flex:1; }
-  .delete-btn { background:#444; color:#fff; padding:8px 15px; border-radius:4px; font-size:12px; flex:1; }
 
   /* 統計情報 */
   .stats-grid { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:5px; text-align:center; }
   .stats-val { font-size:16px; font-weight:bold; color:#f1c40f; }
 
-  /* PDF/印刷用（非表示） */
+  /* PDF/印刷用（横向き・A4） */
   #printArea { display: none; }
 
   @media print {
-    @page { size: A4; margin: 10mm; }
+    /* A4横向きに固定 */
+    @page { size: A4 landscape; margin: 8mm; }
     body { background: white !important; color: black !important; }
     #splash, .header, .search-card, .tool-section, .stats-card, #calfList, .page, #inputPage { display: none !important; }
     #printArea { display: block !important; width: 100%; }
-    .print-stats { display: flex; justify-content: flex-end; gap: 20px; font-size: 12px; margin-bottom: 5px; color: black !important; }
+    .print-stats { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 10px; font-weight: bold; }
     table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-    th, td { border: 1px solid black; padding: 4px 2px; font-size: 9px; text-align: center; word-wrap: break-word; color: black !important; }
-    th { background: #eee !important; }
+    th, td { border: 1px solid black; padding: 6px 2px; font-size: 11px; text-align: center; color: black !important; }
+    th { background: #f2f2f2 !important; }
+    /* 性別ごとの色付け（印刷時も有効に） */
+    .tr-castrated { background-color: #e6f0ff !important; -webkit-print-color-adjust: exact; }
+    .tr-female { background-color: #fff0f5 !important; -webkit-print-color-adjust: exact; }
+    .tr-male { background-color: #f0fff0 !important; -webkit-print-color-adjust: exact; }
   }
 </style>
 </head>
@@ -131,24 +131,27 @@
 
 <div id="printArea">
   <div class="print-stats">
-    <span>平均日齢: <b id="pAvgDays"></b></span>
-    <span>平均体重: <b id="pAvgWeight"></b></span>
-    <span>平均価格: <b id="pAvgPrice"></b></span>
+    <span>セリ上々 子牛管理台帳</span>
+    <div>
+      平均日齢: <span id="pAvgDays"></span> / 
+      平均体重: <span id="pAvgWeight"></span> / 
+      平均価格: <span id="pAvgPrice"></span>
+    </div>
   </div>
   <table>
     <thead>
       <tr>
-        <th style="width:5%">番号</th>
-        <th style="width:12%">上場日</th>
-        <th style="width:15%">耳標番号</th>
-        <th style="width:12%">生年月日</th>
-        <th style="width:8%">性別</th>
-        <th style="width:10%">父の名前</th>
-        <th style="width:10%">母の名前</th>
+        <th style="width:4%">No</th>
+        <th style="width:11%">上場日</th>
+        <th style="width:14%">耳標番号</th>
+        <th style="width:11%">生年月日</th>
+        <th style="width:7%">性別</th>
+        <th style="width:11%">父名</th>
+        <th style="width:11%">母名</th>
         <th style="width:6%">日齢</th>
         <th style="width:6%">体重</th>
-        <th style="width:10%">価格</th>
-        <th style="width:6%">メモ</th>
+        <th style="width:9%">価格</th>
+        <th style="width:10%">メモ</th>
       </tr>
     </thead>
     <tbody id="printTableBody"></tbody>
@@ -157,6 +160,7 @@
 
 <script>
   let currentFilteredList = [];
+  const STORAGE_KEY = 'seri_joujou_v5';
 
   function formatInputDate(el) {
     let val = el.value.replace(/\D/g, '');
@@ -166,8 +170,6 @@
     else if (val.length >= 7) f = val.slice(0, 4) + '/' + val.slice(4, 6) + '/' + val.slice(6);
     el.value = f;
   }
-
-  const STORAGE_KEY = 'seri_joujou_v5';
 
   window.addEventListener('load', () => {
     setTimeout(() => { document.getElementById('splash').style.opacity = '0'; setTimeout(() => document.getElementById('splash').style.display='none', 500); }, 2000);
@@ -198,7 +200,6 @@
     document.querySelectorAll('#inputPage input, #inputPage textarea').forEach(i => i.value = "");
     document.getElementById('gender').value = "去勢";
     document.getElementById('editId').value = "";
-    document.getElementById('submitBtn').innerText = "データを保存";
   }
 
   function renderList() {
@@ -232,30 +233,22 @@
     const listDiv = document.getElementById('calfList');
     listDiv.innerHTML = currentFilteredList.map(c => {
       let cls = c.gender === "去勢" ? "border-castrated" : c.gender === "雌" ? "border-female" : "border-male";
-      return `
-      <div class="calf-card ${cls}">
+      return `<div class="calf-card ${cls}">
         <div class="card-id">No. ${c.earId || '-'}</div>
         <div class="card-details">
-          上場年月日：${c.listingDate || '-'}<br>
-          生年月日：${c.birthDate || '-'}<br>
-          性別：${c.gender}<br>
-          父の名前：${c.father || '-'}<br>
-          母の名前：${c.mother || '-'}<br>
-          日齢：${c.days || '-'}日<br>
-          体重：${c.weight || '-'}kg<br>
-          価格：<span class="card-price">${c.price ? c.price + '千円' : '-'}</span><br>
-          メモ：${c.memo || '-'}
+          上場日:${c.listingDate} | 性別:${c.gender} | 父:${c.father}<br>
+          価格:<span class="card-price">${c.price ? c.price + '千円' : '-'}</span> / 体重:${c.weight}kg
         </div>
         <div class="action-row">
-          <button class="edit-btn" onclick="editData(${c.id})">編集</button>
-          <button class="delete-btn" onclick="deleteData(${c.id})">削除</button>
+          <button class="edit-btn" onclick="editData(${c.id})" style="background:#2980b9; color:white; border:none; padding:8px; flex:1; border-radius:4px;">編集</button>
+          <button class="delete-btn" onclick="deleteData(${c.id})" style="background:#444; color:white; border:none; padding:8px; flex:1; border-radius:4px;">削除</button>
         </div>
       </div>`;
     }).join('');
 
     const pBody = document.getElementById('printTableBody');
     pBody.innerHTML = currentFilteredList.map((c, i) => `
-      <tr>
+      <tr class="${c.gender === '去勢'?'tr-castrated':c.gender === '雌'?'tr-female':'tr-male'}">
         <td>${i + 1}</td>
         <td>${c.listingDate || ''}</td>
         <td>${c.earId || ''}</td>
@@ -281,7 +274,7 @@
     showPage('inputPage');
   }
 
-  function deleteData(id) { if(confirm("削除しますか？")) { let list = JSON.parse(localStorage.getItem(STORAGE_KEY)); localStorage.setItem(STORAGE_KEY, JSON.stringify(list.filter(i=>i.id!==id))); renderList(); } }
+  function deleteData(id) { if(confirm("削除しますまか？")) { let list = JSON.parse(localStorage.getItem(STORAGE_KEY)); localStorage.setItem(STORAGE_KEY, JSON.stringify(list.filter(i=>i.id!==id))); renderList(); } }
 
   function openPrintWindow() {
     if(!currentFilteredList.length) { alert("データがありません"); return; }
@@ -290,7 +283,7 @@
 
   function exportExcel() {
     if(!currentFilteredList.length) return;
-    let csv = "\uFEFF番号,上場年月日,耳標番号,生年月日,性別,父の名前,母の名前,日齢,体重,価格,メモ\n";
+    let csv = "\uFEFFNo,上場年月日,耳標番号,生年月日,性別,父名,母名,日齢,体重,価格,メモ\n";
     currentFilteredList.forEach((c, i) => {
       csv += `${i+1},${c.listingDate},${c.earId},${c.birthDate},${c.gender},${c.father},${c.mother},${c.days},${c.weight},${c.price ? c.price + '千円' : ''},${c.memo}\n`;
     });
