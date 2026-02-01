@@ -26,11 +26,8 @@
   .page { display:none; }
   .page.active { display:block; }
 
-  /* 保存データ一覧（カード形式） */
-  .calf-card {
-    background:#222; padding:15px; border-radius:12px; margin-bottom:12px;
-    position:relative; border-left:8px solid #444;
-  }
+  /* 一覧（カード形式） */
+  .calf-card { background:#222; padding:15px; border-radius:12px; margin-bottom:12px; position:relative; border-left:8px solid #444; }
   .border-castrated { border-left-color: #0000ff !important; }
   .border-female { border-left-color: #ffc0cb !important; }
   .border-male { border-left-color: #008000 !important; }
@@ -45,9 +42,8 @@
   .stats-grid { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:5px; text-align:center; }
   .stats-val { font-size:16px; font-weight:bold; color:#f1c40f; }
 
-  /* PDF/印刷用（非表示・A4横向き） */
+  /* PDF/印刷用（横向き） */
   #printArea { display: none; }
-
   @media print {
     @page { size: A4 landscape; margin: 10mm; }
     body { background: white !important; color: black !important; }
@@ -99,7 +95,7 @@
 <div id="listPage" class="page">
   <div class="container">
     <div class="search-card">
-      <label>上場年月日で検索・絞り込み</label>
+      <label>上場年月日で絞り込み（数字8桁）</label>
       <div class="flex-row" style="margin-bottom:10px;">
         <input type="tel" id="searchStart" oninput="formatInputDate(this); renderList()" placeholder="開始日" class="flex-item">
         <input type="tel" id="searchEnd" oninput="formatInputDate(this); renderList()" placeholder="終了日" class="flex-item">
@@ -161,6 +157,7 @@
   let currentFilteredList = [];
   const STORAGE_KEY = 'seri_joujou_v5';
 
+  // 入力時の見た目（スラッシュ補完）
   function formatInputDate(el) {
     let val = el.value.replace(/\D/g, '');
     if (val.length > 8) val = val.slice(0, 8);
@@ -168,6 +165,19 @@
     if (val.length >= 5 && val.length <= 6) f = val.slice(0, 4) + '/' + val.slice(4);
     else if (val.length >= 7) f = val.slice(0, 4) + '/' + val.slice(4, 6) + '/' + val.slice(6);
     el.value = f;
+  }
+
+  // どんな形式の日付でも「YYYY/MM/DD」に統一する変換器
+  function toSlashedDate(d) {
+    if(!d) return "";
+    let val = String(d).replace(/\D/g, '');
+    if (val.length !== 8) return d; // 8桁以外はそのまま
+    return val.slice(0, 4) + '/' + val.slice(4, 6) + '/' + val.slice(6);
+  }
+
+  function cleanDate(d) {
+    if(!d) return "";
+    return String(d).replace(/\D/g, '');
   }
 
   window.addEventListener('load', () => {
@@ -185,7 +195,16 @@
     const fields = ['listingDate', 'earId', 'birthDate', 'gender', 'mother', 'father', 'days', 'weight', 'price', 'memo'];
     const id = document.getElementById('editId').value;
     const data = { id: id ? Number(id) : Date.now() };
-    fields.forEach(f => data[f] = document.getElementById(f).value);
+    
+    fields.forEach(f => {
+      let val = document.getElementById(f).value;
+      // 保存前に、上場日と生年月日を必ず「/」形式に変換する
+      if(f === 'listingDate' || f === 'birthDate') {
+        val = toSlashedDate(val);
+      }
+      data[f] = val;
+    });
+
     let list = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
     if(id) { let idx = list.findIndex(i => i.id === data.id); list[idx] = data; }
     else { list.unshift(data); }
@@ -204,19 +223,15 @@
 
   function renderList() {
     let list = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-    list.sort((a,b) => {
-      const dateA = (a.listingDate || "").replace(/\//g,'');
-      const dateB = (b.listingDate || "").replace(/\//g,'');
-      return dateB.localeCompare(dateA);
-    });
+    list.sort((a,b) => cleanDate(b.listingDate).localeCompare(cleanDate(a.listingDate)));
 
-    const sS = (document.getElementById('searchStart').value || "").replace(/\//g,'');
-    const sE = (document.getElementById('searchEnd').value || "").replace(/\//g,'');
+    const sS = cleanDate(document.getElementById('searchStart').value);
+    const sE = cleanDate(document.getElementById('searchEnd').value);
     const sF = document.getElementById('searchFather').value.toLowerCase();
     const sM = document.getElementById('searchMother').value.toLowerCase();
 
     currentFilteredList = list.filter(c => {
-      const targetDate = (c.listingDate || "").replace(/\//g,'');
+      const targetDate = cleanDate(c.listingDate);
       const matchStart = !sS || (targetDate >= sS);
       const matchEnd = !sE || (targetDate <= sE);
       const matchFather = !sF || (c.father || "").toLowerCase().includes(sF);
@@ -226,7 +241,6 @@
 
     const sum = (arr, key) => arr.filter(i => i[key] && !isNaN(i[key])).reduce((a, b) => a + Number(b[key]), 0);
     const count = (arr, key) => arr.filter(i => i[key] && !isNaN(i[key])).length;
-    
     const avgD = count(currentFilteredList, 'days') ? Math.round(sum(currentFilteredList, 'days') / count(currentFilteredList, 'days')) : 0;
     const avgW = count(currentFilteredList, 'weight') ? Math.round(sum(currentFilteredList, 'weight') / count(currentFilteredList, 'weight')) : 0;
     const avgP = count(currentFilteredList, 'price') ? Math.round(sum(currentFilteredList, 'price') / count(currentFilteredList, 'price')) : 0;
