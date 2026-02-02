@@ -26,13 +26,21 @@
   .page { display:none; }
   .page.active { display:block; }
 
-  /* 一覧（カード形式） */
+  /* 保存データ一覧（カード形式） */
   .calf-card { background:#222; padding:15px; border-radius:12px; margin-bottom:12px; position:relative; border-left:8px solid #444; }
   .border-castrated { border-left-color: #0000ff !important; }
   .border-female { border-left-color: #ffc0cb !important; }
   .border-male { border-left-color: #008000 !important; }
   .card-id { font-size:20px; font-weight:bold; color:#fff; margin-bottom:8px; }
-  .card-details { font-size:14px; line-height:1.7; color:#ddd; }
+  
+  /* 詳細テキスト（項目と数字を太字設定） */
+  .card-details { 
+    font-size:14px; 
+    line-height:1.7; 
+    color:#eee; 
+    font-weight: bold; 
+  }
+  
   .card-price { color:#f1c40f; font-weight:bold; }
   .action-row { display:flex; gap:10px; margin-top:10px; }
   .edit-btn { background:#2980b9; color:white; padding:8px 15px; border-radius:4px; font-size:12px; flex:1; border:none; cursor:pointer; }
@@ -42,7 +50,7 @@
   .stats-grid { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:5px; text-align:center; }
   .stats-val { font-size:16px; font-weight:bold; color:#f1c40f; }
 
-  /* PDF/印刷用（横向き） */
+  /* PDF/印刷用（非表示・A4横向き） */
   #printArea { display: none; }
   @media print {
     @page { size: A4 landscape; margin: 10mm; }
@@ -95,10 +103,18 @@
 <div id="listPage" class="page">
   <div class="container">
     <div class="search-card">
-      <label>上場年月日で絞り込み（数字8桁）</label>
+      <label>絞り込み条件（上場日・性別・父・母）</label>
       <div class="flex-row" style="margin-bottom:10px;">
         <input type="tel" id="searchStart" oninput="formatInputDate(this); renderList()" placeholder="開始日" class="flex-item">
         <input type="tel" id="searchEnd" oninput="formatInputDate(this); renderList()" placeholder="終了日" class="flex-item">
+      </div>
+      <div class="form-group" style="margin-bottom:10px;">
+        <select id="searchGender" onchange="renderList()">
+          <option value="">すべての性別</option>
+          <option value="去勢">去勢</option>
+          <option value="雌">雌</option>
+          <option value="雄">雄</option>
+        </select>
       </div>
       <div class="flex-row">
         <input type="text" id="searchFather" oninput="renderList()" placeholder="父名検索" class="flex-item">
@@ -157,7 +173,6 @@
   let currentFilteredList = [];
   const STORAGE_KEY = 'seri_joujou_v5';
 
-  // 入力時の見た目（スラッシュ補完）
   function formatInputDate(el) {
     let val = el.value.replace(/\D/g, '');
     if (val.length > 8) val = val.slice(0, 8);
@@ -167,11 +182,10 @@
     el.value = f;
   }
 
-  // どんな形式の日付でも「YYYY/MM/DD」に統一する変換器
   function toSlashedDate(d) {
     if(!d) return "";
     let val = String(d).replace(/\D/g, '');
-    if (val.length !== 8) return d; // 8桁以外はそのまま
+    if (val.length !== 8) return d;
     return val.slice(0, 4) + '/' + val.slice(4, 6) + '/' + val.slice(6);
   }
 
@@ -198,10 +212,7 @@
     
     fields.forEach(f => {
       let val = document.getElementById(f).value;
-      // 保存前に、上場日と生年月日を必ず「/」形式に変換する
-      if(f === 'listingDate' || f === 'birthDate') {
-        val = toSlashedDate(val);
-      }
+      if(f === 'listingDate' || f === 'birthDate') val = toSlashedDate(val);
       data[f] = val;
     });
 
@@ -227,6 +238,7 @@
 
     const sS = cleanDate(document.getElementById('searchStart').value);
     const sE = cleanDate(document.getElementById('searchEnd').value);
+    const sG = document.getElementById('searchGender').value; // 性別検索
     const sF = document.getElementById('searchFather').value.toLowerCase();
     const sM = document.getElementById('searchMother').value.toLowerCase();
 
@@ -234,9 +246,10 @@
       const targetDate = cleanDate(c.listingDate);
       const matchStart = !sS || (targetDate >= sS);
       const matchEnd = !sE || (targetDate <= sE);
+      const matchGender = !sG || (c.gender === sG); // 性別判定
       const matchFather = !sF || (c.father || "").toLowerCase().includes(sF);
       const matchMother = !sM || (c.mother || "").toLowerCase().includes(sM);
-      return matchStart && matchEnd && matchFather && matchMother;
+      return matchStart && matchEnd && matchGender && matchFather && matchMother;
     });
 
     const sum = (arr, key) => arr.filter(i => i[key] && !isNaN(i[key])).reduce((a, b) => a + Number(b[key]), 0);
