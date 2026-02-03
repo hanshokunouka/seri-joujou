@@ -31,20 +31,23 @@
   .border-castrated { border-left-color: #0000ff !important; }
   .border-female { border-left-color: #ffc0cb !important; }
   .border-male { border-left-color: #008000 !important; }
-  .card-id { font-size:20px; font-weight:bold; color:#fff; margin-bottom:8px; }
   
-  /* 詳細テキスト（項目と数字を太字設定） */
+  /* 耳標番号 (20px) */
+  .card-id { font-size:20px; font-weight:bold; color:#fff; margin-bottom:10px; border-bottom: 1px solid #333; padding-bottom: 5px; }
+  
+  /* 詳細テキスト（すべて20pxに統一） */
   .card-details { 
-    font-size:14px; 
-    line-height:1.7; 
+    font-size:20px; 
+    line-height:1.6; 
     color:#eee; 
     font-weight: bold; 
   }
   
   .card-price { color:#f1c40f; font-weight:bold; }
-  .action-row { display:flex; gap:10px; margin-top:10px; }
-  .edit-btn { background:#2980b9; color:white; padding:8px 15px; border-radius:4px; font-size:12px; flex:1; border:none; cursor:pointer; }
-  .delete-btn { background:#444; color:#fff; padding:8px 15px; border-radius:4px; font-size:12px; flex:1; border:none; cursor:pointer; }
+  .action-row { display:flex; gap:10px; margin-top:15px; }
+  /* ボタンも押しやすいよう少し大きく調整 */
+  .edit-btn { background:#2980b9; color:white; padding:12px; border-radius:8px; font-size:14px; flex:1; border:none; cursor:pointer; font-weight:bold; }
+  .delete-btn { background:#444; color:#fff; padding:12px; border-radius:8px; font-size:14px; flex:1; border:none; cursor:pointer; font-weight:bold; }
 
   /* 統計情報 */
   .stats-grid { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:5px; text-align:center; }
@@ -238,7 +241,7 @@
 
     const sS = cleanDate(document.getElementById('searchStart').value);
     const sE = cleanDate(document.getElementById('searchEnd').value);
-    const sG = document.getElementById('searchGender').value; // 性別検索
+    const sG = document.getElementById('searchGender').value; 
     const sF = document.getElementById('searchFather').value.toLowerCase();
     const sM = document.getElementById('searchMother').value.toLowerCase();
 
@@ -246,7 +249,7 @@
       const targetDate = cleanDate(c.listingDate);
       const matchStart = !sS || (targetDate >= sS);
       const matchEnd = !sE || (targetDate <= sE);
-      const matchGender = !sG || (c.gender === sG); // 性別判定
+      const matchGender = !sG || (c.gender === sG); 
       const matchFather = !sF || (c.father || "").toLowerCase().includes(sF);
       const matchMother = !sM || (c.mother || "").toLowerCase().includes(sM);
       return matchStart && matchEnd && matchGender && matchFather && matchMother;
