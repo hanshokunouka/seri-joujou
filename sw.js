@@ -1,4 +1,4 @@
-const CACHE_NAME = "seri-joujou-v24";
+const CACHE_NAME = "seri-joujou-v25";
 const urlsToCache = [
   "./",
   "./index.html",
