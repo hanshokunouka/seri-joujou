@@ -32,20 +32,10 @@
   .border-female { border-left-color: #ffc0cb !important; }
   .border-male { border-left-color: #008000 !important; }
   
-  /* 耳標番号 (20px) */
   .card-id { font-size:20px; font-weight:bold; color:#fff; margin-bottom:10px; border-bottom: 1px solid #333; padding-bottom: 5px; }
-  
-  /* 詳細テキスト（すべて20pxに統一） */
-  .card-details { 
-    font-size:20px; 
-    line-height:1.6; 
-    color:#eee; 
-    font-weight: bold; 
-  }
-  
+  .card-details { font-size:20px; line-height:1.6; color:#eee; font-weight: bold; }
   .card-price { color:#f1c40f; font-weight:bold; }
   .action-row { display:flex; gap:10px; margin-top:15px; }
-  /* ボタンも押しやすいよう少し大きく調整 */
   .edit-btn { background:#2980b9; color:white; padding:12px; border-radius:8px; font-size:14px; flex:1; border:none; cursor:pointer; font-weight:bold; }
   .delete-btn { background:#444; color:#fff; padding:12px; border-radius:8px; font-size:14px; flex:1; border:none; cursor:pointer; font-weight:bold; }
 
@@ -56,13 +46,13 @@
   /* PDF/印刷用（非表示・A4横向き） */
   #printArea { display: none; }
   @media print {
-    @page { size: A4 landscape; margin: 10mm; }
+    @page { size: A4 landscape; margin: 5mm; }
     body { background: white !important; color: black !important; }
     #splash, .header, .search-card, .tool-section, .stats-card, #calfList, .page, #inputPage { display: none !important; }
     #printArea { display: block !important; width: 100%; }
-    .print-stats { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 10px; font-weight: bold; color: black !important; }
-    table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-    th, td { border: 1px solid black; padding: 6px 2px; font-size: 11px; text-align: center; color: black !important; }
+    .print-stats { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; font-weight: bold; color: black !important; }
+    table { width: 100%; border-collapse: collapse; table-layout: fixed; border: 2px solid black; }
+    th, td { border: 1px solid black; padding: 4px 2px; font-size: 9px; text-align: center; color: black !important; word-wrap: break-word; }
     th { background: #eee !important; }
     .tr-castrated { background-color: rgba(0,0,255,0.05) !important; -webkit-print-color-adjust: exact; }
     .tr-female { background-color: rgba(255,192,203,0.1) !important; -webkit-print-color-adjust: exact; }
@@ -88,10 +78,9 @@
       <div class="form-group"><label>耳標番号</label><input type="number" id="earId" placeholder="耳標番号"></div>
       <div class="form-group"><label>生年月日</label><input type="tel" id="birthDate" placeholder="20240301" oninput="formatInputDate(this)"></div>
       <div class="form-group"><label>性別</label><select id="gender"><option value="去勢">去勢</option><option value="雌">雌</option><option value="雄">雄</option></select></div>
-      <div class="flex-row">
-        <div class="form-group flex-item"><label>父の名前</label><input type="text" id="father"></div>
-        <div class="form-group flex-item"><label>母の名前</label><input type="text" id="mother"></div>
-      </div>
+      <div class="form-group"><label>父の名前</label><input type="text" id="father" placeholder="例：福之助"></div>
+      <div class="form-group"><label>母の父の名前</label><input type="text" id="motherFather" placeholder="例：安福久"></div>
+      <div class="form-group"><label>母の祖父の名前</label><input type="text" id="motherGrandfather" placeholder="例：平茂勝"></div>
       <div class="flex-row">
         <div class="form-group flex-item"><label>日齢</label><input type="number" id="days"></div>
         <div class="form-group flex-item"><label>体重(kg)</label><input type="number" id="weight"></div>
@@ -106,7 +95,7 @@
 <div id="listPage" class="page">
   <div class="container">
     <div class="search-card">
-      <label>絞り込み条件（上場日・性別・父・母）</label>
+      <label>絞り込み条件（上場日・性別・血統）</label>
       <div class="flex-row" style="margin-bottom:10px;">
         <input type="tel" id="searchStart" oninput="formatInputDate(this); renderList()" placeholder="開始日" class="flex-item">
         <input type="tel" id="searchEnd" oninput="formatInputDate(this); renderList()" placeholder="終了日" class="flex-item">
@@ -119,10 +108,7 @@
           <option value="雄">雄</option>
         </select>
       </div>
-      <div class="flex-row">
-        <input type="text" id="searchFather" oninput="renderList()" placeholder="父名検索" class="flex-item">
-        <input type="text" id="searchMother" oninput="renderList()" placeholder="母名検索" class="flex-item">
-      </div>
+      <input type="text" id="searchLineage" oninput="renderList()" placeholder="父・母父・母祖父名で検索" class="form-group" style="width:100%; padding:12px; border-radius:8px; border:1px solid #444; background:#222; color:white;">
     </div>
 
     <div class="stats-card">
@@ -137,7 +123,7 @@
       <div class="tool-row" style="display:flex; gap:5px;">
         <button class="tool-btn" onclick="exportExcel()" style="background:#1f7244;">Excel出力</button>
         <button class="tool-btn" onclick="openPrintWindow()" style="background:#2ecc71;">PDF保存</button>
-        <button class="tool-btn" onclick="exportBackup()">データ保存</button>
+        <button class="tool-btn" onclick="exportBackup()">バックアップ</button>
         <button class="tool-btn" onclick="document.getElementById('importFile').click()">復元</button>
       </div>
       <input type="file" id="importFile" style="display:none" onchange="importBackup(event)">
@@ -155,17 +141,18 @@
   <table>
     <thead>
       <tr>
-        <th style="width:4%">No</th>
-        <th style="width:11%">上場日</th>
-        <th style="width:14%">耳標番号</th>
-        <th style="width:11%">生年月日</th>
-        <th style="width:7%">性別</th>
-        <th style="width:11%">父名</th>
-        <th style="width:11%">母名</th>
-        <th style="width:6%">日齢</th>
-        <th style="width:6%">体重</th>
-        <th style="width:9%">価格</th>
-        <th style="width:10%">メモ</th>
+        <th style="width:3%">No</th>
+        <th style="width:9%">上場日</th>
+        <th style="width:12%">耳標番号</th>
+        <th style="width:9%">生年月日</th>
+        <th style="width:5%">性別</th>
+        <th style="width:10%">父</th>
+        <th style="width:10%">母父</th>
+        <th style="width:10%">母祖父</th>
+        <th style="width:5%">日齢</th>
+        <th style="width:5%">体重</th>
+        <th style="width:8%">価格</th>
+        <th style="width:14%">メモ</th>
       </tr>
     </thead>
     <tbody id="printTableBody"></tbody>
@@ -174,7 +161,7 @@
 
 <script>
   let currentFilteredList = [];
-  const STORAGE_KEY = 'seri_joujou_v5';
+  const STORAGE_KEY = 'seri_joujou_v6'; // バージョンアップに合わせてキーを変更
 
   function formatInputDate(el) {
     let val = el.value.replace(/\D/g, '');
@@ -209,7 +196,7 @@
   }
 
   function saveData() {
-    const fields = ['listingDate', 'earId', 'birthDate', 'gender', 'mother', 'father', 'days', 'weight', 'price', 'memo'];
+    const fields = ['listingDate', 'earId', 'birthDate', 'gender', 'father', 'motherFather', 'motherGrandfather', 'days', 'weight', 'price', 'memo'];
     const id = document.getElementById('editId').value;
     const data = { id: id ? Number(id) : Date.now() };
     
@@ -242,17 +229,16 @@
     const sS = cleanDate(document.getElementById('searchStart').value);
     const sE = cleanDate(document.getElementById('searchEnd').value);
     const sG = document.getElementById('searchGender').value; 
-    const sF = document.getElementById('searchFather').value.toLowerCase();
-    const sM = document.getElementById('searchMother').value.toLowerCase();
+    const sL = document.getElementById('searchLineage').value.toLowerCase();
 
     currentFilteredList = list.filter(c => {
       const targetDate = cleanDate(c.listingDate);
       const matchStart = !sS || (targetDate >= sS);
       const matchEnd = !sE || (targetDate <= sE);
       const matchGender = !sG || (c.gender === sG); 
-      const matchFather = !sF || (c.father || "").toLowerCase().includes(sF);
-      const matchMother = !sM || (c.mother || "").toLowerCase().includes(sM);
-      return matchStart && matchEnd && matchGender && matchFather && matchMother;
+      const lineageText = `${c.father} ${c.motherFather} ${c.motherGrandfather}`.toLowerCase();
+      const matchLineage = !sL || lineageText.includes(sL);
+      return matchStart && matchEnd && matchGender && matchLineage;
     });
 
     const sum = (arr, key) => arr.filter(i => i[key] && !isNaN(i[key])).reduce((a, b) => a + Number(b[key]), 0);
@@ -278,10 +264,10 @@
           上場年月日：${c.listingDate || '-'}<br>
           生年月日：${c.birthDate || '-'}<br>
           性別：${c.gender}<br>
-          父の名前：${c.father || '-'}<br>
-          母の名前：${c.mother || '-'}<br>
-          日齢：${c.days || '-'}日<br>
-          体重：${c.weight || '-'}kg<br>
+          父：${c.father || '-'}<br>
+          母父：${c.motherFather || '-'}<br>
+          母祖父：${c.motherGrandfather || '-'}<br>
+          日齢：${c.days || '-'}日 / 体重：${c.weight || '-'}kg<br>
           価格：<span class="card-price">${c.price ? c.price + '千円' : '-'}</span><br>
           メモ：${c.memo || '-'}
         </div>
@@ -301,7 +287,8 @@
         <td>${c.birthDate || ''}</td>
         <td>${c.gender || ''}</td>
         <td>${c.father || ''}</td>
-        <td>${c.mother || ''}</td>
+        <td>${c.motherFather || ''}</td>
+        <td>${c.motherGrandfather || ''}</td>
         <td>${c.days || ''}</td>
         <td>${c.weight || ''}</td>
         <td>${c.price ? c.price + '千円' : ''}</td>
@@ -313,7 +300,7 @@
   function editData(id) {
     let list = JSON.parse(localStorage.getItem(STORAGE_KEY));
     let data = list.find(i => i.id === id);
-    const fields = ['listingDate', 'earId', 'birthDate', 'gender', 'mother', 'father', 'days', 'weight', 'price', 'memo'];
+    const fields = ['listingDate', 'earId', 'birthDate', 'gender', 'father', 'motherFather', 'motherGrandfather', 'days', 'weight', 'price', 'memo'];
     fields.forEach(f => document.getElementById(f).value = data[f] || "");
     document.getElementById('editId').value = data.id;
     document.getElementById('submitBtn').innerText = "更新して保存";
@@ -329,9 +316,9 @@
 
   function exportExcel() {
     if(!currentFilteredList.length) return;
-    let csv = "\uFEFFNo,上場年月日,耳標番号,生年月日,性別,父名,母名,日齢,体重,価格,メモ\n";
+    let csv = "\uFEFFNo,上場年月日,耳標番号,生年月日,性別,父,母父,母祖父,日齢,体重,価格,メモ\n";
     currentFilteredList.forEach((c, i) => {
-      csv += `${i+1},${c.listingDate},${c.earId},${c.birthDate},${c.gender},${c.father},${c.mother},${c.days},${c.weight},${c.price ? c.price + '千円' : ''},${c.memo}\n`;
+      csv += `${i+1},${c.listingDate},${c.earId},${c.birthDate},${c.gender},${c.father},${c.motherFather},${c.motherGrandfather},${c.days},${c.weight},${c.price ? c.price + '千円' : ''},${c.memo}\n`;
     });
     const blob = new Blob([csv], { type: 'text/csv' });
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'セリ上々_出力.csv'; a.click();
@@ -345,11 +332,9 @@
 
   function importBackup(e) {
     const reader = new FileReader();
-    reader.onload = (e) => { if(confirm("復元しますか？")) { localStorage.setItem(STORAGE_KEY, e.target.result); renderList(); } };
+    reader.onload = (e) => { if(confirm("復元しますか？（現在のデータが上書きされます）")) { localStorage.setItem(STORAGE_KEY, e.target.result); renderList(); } };
     reader.readAsText(e.target.files[0]);
   }
-
-  if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 </script>
 </body>
 </html>
