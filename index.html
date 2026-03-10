@@ -78,9 +78,10 @@
       <div class="form-group"><label>耳標番号</label><input type="number" id="earId" placeholder="耳標番号"></div>
       <div class="form-group"><label>生年月日</label><input type="tel" id="birthDate" placeholder="20240301" oninput="formatInputDate(this)"></div>
       <div class="form-group"><label>性別</label><select id="gender"><option value="去勢">去勢</option><option value="雌">雌</option><option value="雄">雄</option></select></div>
-      <div class="form-group"><label>父の名前</label><input type="text" id="father" placeholder="例：福之助"></div>
+      <div class="form-group"><label>父の名前</label><input type="text" id="father" placeholder="例：美津照重"></div>
       <div class="form-group"><label>母の父の名前</label><input type="text" id="motherFather" placeholder="例：安福久"></div>
       <div class="form-group"><label>母の祖父の名前</label><input type="text" id="motherGrandfather" placeholder="例：平茂勝"></div>
+      <div class="form-group"><label>母の名前</label><input type="text" id="motherName" placeholder="例：はなこ"></div>
       <div class="flex-row">
         <div class="form-group flex-item"><label>日齢</label><input type="number" id="days"></div>
         <div class="form-group flex-item"><label>体重(kg)</label><input type="number" id="weight"></div>
@@ -108,7 +109,10 @@
           <option value="雄">雄</option>
         </select>
       </div>
-      <input type="text" id="searchLineage" oninput="renderList()" placeholder="父・母父・母祖父名で検索" class="form-group" style="width:100%; padding:12px; border-radius:8px; border:1px solid #444; background:#222; color:white;">
+      <div class="flex-row" style="margin-bottom:10px;">
+        <input type="text" id="searchFather" oninput="renderList()" placeholder="父の名前で検索" class="flex-item" style="padding:12px; border-radius:8px; border:1px solid #444; background:#222; color:white;">
+        <input type="text" id="searchMother" oninput="renderList()" placeholder="母の名前で検索" class="flex-item" style="padding:12px; border-radius:8px; border:1px solid #444; background:#222; color:white;">
+      </div>
     </div>
 
     <div class="stats-card">
@@ -146,13 +150,14 @@
         <th style="width:12%">耳標番号</th>
         <th style="width:9%">生年月日</th>
         <th style="width:5%">性別</th>
-        <th style="width:10%">父</th>
-        <th style="width:10%">母父</th>
-        <th style="width:10%">母祖父</th>
-        <th style="width:5%">日齢</th>
-        <th style="width:5%">体重</th>
+        <th style="width:9%">父</th>
+        <th style="width:9%">母父</th>
+        <th style="width:9%">母祖父</th>
+        <th style="width:9%">母</th>
+        <th style="width:4%">日齢</th>
+        <th style="width:4%">体重</th>
         <th style="width:8%">価格</th>
-        <th style="width:14%">メモ</th>
+        <th style="width:12%">メモ</th>
       </tr>
     </thead>
     <tbody id="printTableBody"></tbody>
@@ -161,7 +166,7 @@
 
 <script>
   let currentFilteredList = [];
-  const STORAGE_KEY = 'seri_joujou_v6'; // バージョンアップに合わせてキーを変更
+  const STORAGE_KEY = 'seri_joujou_v6'; 
 
   function formatInputDate(el) {
     let val = el.value.replace(/\D/g, '');
@@ -196,7 +201,7 @@
   }
 
   function saveData() {
-    const fields = ['listingDate', 'earId', 'birthDate', 'gender', 'father', 'motherFather', 'motherGrandfather', 'days', 'weight', 'price', 'memo'];
+    const fields = ['listingDate', 'earId', 'birthDate', 'gender', 'father', 'motherFather', 'motherGrandfather', 'motherName', 'days', 'weight', 'price', 'memo'];
     const id = document.getElementById('editId').value;
     const data = { id: id ? Number(id) : Date.now() };
     
@@ -229,16 +234,17 @@
     const sS = cleanDate(document.getElementById('searchStart').value);
     const sE = cleanDate(document.getElementById('searchEnd').value);
     const sG = document.getElementById('searchGender').value; 
-    const sL = document.getElementById('searchLineage').value.toLowerCase();
+    const sF = document.getElementById('searchFather').value.toLowerCase();
+    const sM = document.getElementById('searchMother').value.toLowerCase();
 
     currentFilteredList = list.filter(c => {
       const targetDate = cleanDate(c.listingDate);
       const matchStart = !sS || (targetDate >= sS);
       const matchEnd = !sE || (targetDate <= sE);
       const matchGender = !sG || (c.gender === sG); 
-      const lineageText = `${c.father} ${c.motherFather} ${c.motherGrandfather}`.toLowerCase();
-      const matchLineage = !sL || lineageText.includes(sL);
-      return matchStart && matchEnd && matchGender && matchLineage;
+      const matchFather = !sF || (c.father || "").toLowerCase().includes(sF);
+      const matchMother = !sM || (c.motherName || "").toLowerCase().includes(sM);
+      return matchStart && matchEnd && matchGender && matchFather && matchMother;
     });
 
     const sum = (arr, key) => arr.filter(i => i[key] && !isNaN(i[key])).reduce((a, b) => a + Number(b[key]), 0);
@@ -267,6 +273,7 @@
           父：${c.father || '-'}<br>
           母父：${c.motherFather || '-'}<br>
           母祖父：${c.motherGrandfather || '-'}<br>
+          母：${c.motherName || '-'}<br>
           日齢：${c.days || '-'}日 / 体重：${c.weight || '-'}kg<br>
           価格：<span class="card-price">${c.price ? c.price + '千円' : '-'}</span><br>
           メモ：${c.memo || '-'}
@@ -289,6 +296,7 @@
         <td>${c.father || ''}</td>
         <td>${c.motherFather || ''}</td>
         <td>${c.motherGrandfather || ''}</td>
+        <td>${c.motherName || ''}</td>
         <td>${c.days || ''}</td>
         <td>${c.weight || ''}</td>
         <td>${c.price ? c.price + '千円' : ''}</td>
@@ -300,7 +308,7 @@
   function editData(id) {
     let list = JSON.parse(localStorage.getItem(STORAGE_KEY));
     let data = list.find(i => i.id === id);
-    const fields = ['listingDate', 'earId', 'birthDate', 'gender', 'father', 'motherFather', 'motherGrandfather', 'days', 'weight', 'price', 'memo'];
+    const fields = ['listingDate', 'earId', 'birthDate', 'gender', 'father', 'motherFather', 'motherGrandfather', 'motherName', 'days', 'weight', 'price', 'memo'];
     fields.forEach(f => document.getElementById(f).value = data[f] || "");
     document.getElementById('editId').value = data.id;
     document.getElementById('submitBtn').innerText = "更新して保存";
@@ -316,9 +324,9 @@
 
   function exportExcel() {
     if(!currentFilteredList.length) return;
-    let csv = "\uFEFFNo,上場年月日,耳標番号,生年月日,性別,父,母父,母祖父,日齢,体重,価格,メモ\n";
+    let csv = "\uFEFFNo,上場年月日,耳標番号,生年月日,性別,父,母父,母祖父,母,日齢,体重,価格,メモ\n";
     currentFilteredList.forEach((c, i) => {
-      csv += `${i+1},${c.listingDate},${c.earId},${c.birthDate},${c.gender},${c.father},${c.motherFather},${c.motherGrandfather},${c.days},${c.weight},${c.price ? c.price + '千円' : ''},${c.memo}\n`;
+      csv += `${i+1},${c.listingDate},${c.earId},${c.birthDate},${c.gender},${c.father},${c.motherFather},${c.motherGrandfather},${c.motherName},${c.days},${c.weight},${c.price ? c.price + '千円' : ''},${c.memo}\n`;
     });
     const blob = new Blob([csv], { type: 'text/csv' });
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'セリ上々_出力.csv'; a.click();
