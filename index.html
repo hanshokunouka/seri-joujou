@@ -43,20 +43,26 @@
   .stats-grid { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:5px; text-align:center; }
   .stats-val { font-size:16px; font-weight:bold; color:#f1c40f; }
 
-  /* PDF/印刷用（非表示・A4横向き） */
+  /* カスタム確認ダイアログ（画面中央） */
+  #confirmModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; justify-content:center; align-items:center; }
+  .modal-content { background:#222; padding:25px; border-radius:20px; width:80%; max-width:320px; text-align:center; border:1px solid #444; box-shadow:0 10px 25px rgba(0,0,0,0.5); }
+  .modal-title { font-size:18px; font-weight:bold; margin-bottom:20px; color:#fff; }
+  .modal-btns { display:flex; gap:15px; }
+  .modal-btn { flex:1; padding:12px; border-radius:10px; border:none; font-weight:bold; cursor:pointer; font-size:16px; }
+  .btn-cancel { background:#444; color:white; }
+  .btn-confirm { background:#e60012; color:white; }
+
+  /* PDF/印刷用 */
   #printArea { display: none; }
   @media print {
     @page { size: A4 landscape; margin: 5mm; }
     body { background: white !important; color: black !important; }
-    #splash, .header, .search-card, .tool-section, .stats-card, #calfList, .page, #inputPage { display: none !important; }
+    #splash, .header, .search-card, .tool-section, .stats-card, #calfList, .page, #inputPage, #confirmModal { display: none !important; }
     #printArea { display: block !important; width: 100%; }
     .print-stats { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; font-weight: bold; color: black !important; }
     table { width: 100%; border-collapse: collapse; table-layout: fixed; border: 2px solid black; }
     th, td { border: 1px solid black; padding: 4px 2px; font-size: 9px; text-align: center; color: black !important; word-wrap: break-word; }
     th { background: #eee !important; }
-    .tr-castrated { background-color: rgba(0,0,255,0.05) !important; -webkit-print-color-adjust: exact; }
-    .tr-female { background-color: rgba(255,192,203,0.1) !important; -webkit-print-color-adjust: exact; }
-    .tr-male { background-color: rgba(0,128,0,0.05) !important; -webkit-print-color-adjust: exact; }
   }
 </style>
 </head>
@@ -70,6 +76,16 @@
   <button class="header-btn" onclick="showPage('listPage')">一覧</button>
 </div>
 
+<div id="confirmModal">
+  <div class="modal-content">
+    <div class="modal-title">削除して宜しいですか？</div>
+    <div class="modal-btns">
+      <button class="modal-btn btn-cancel" onclick="closeConfirm()">キャンセル</button>
+      <button class="modal-btn btn-confirm" id="modalConfirmBtn">削除する</button>
+    </div>
+  </div>
+</div>
+
 <div id="inputPage" class="page active">
   <div class="container">
     <div class="form-card">
@@ -78,10 +94,10 @@
       <div class="form-group"><label>耳標番号</label><input type="number" id="earId" placeholder="耳標番号"></div>
       <div class="form-group"><label>生年月日</label><input type="tel" id="birthDate" placeholder="20240301" oninput="formatInputDate(this)"></div>
       <div class="form-group"><label>性別</label><select id="gender"><option value="去勢">去勢</option><option value="雌">雌</option><option value="雄">雄</option></select></div>
-      <div class="form-group"><label>父の名前</label><input type="text" id="father" placeholder="例：美津照重"></div>
-      <div class="form-group"><label>母の父の名前</label><input type="text" id="motherFather" placeholder="例：安福久"></div>
-      <div class="form-group"><label>母の祖父の名前</label><input type="text" id="motherGrandfather" placeholder="例：平茂勝"></div>
-      <div class="form-group"><label>母の名前</label><input type="text" id="motherName" placeholder="例：はなこ"></div>
+      <div class="form-group"><label>父の名前</label><input type="text" id="father" placeholder="例：美津照重" list="hist-father"></div>
+      <div class="form-group"><label>母の父の名前</label><input type="text" id="motherFather" placeholder="例：安福久" list="hist-motherFather"></div>
+      <div class="form-group"><label>母の祖父の名前</label><input type="text" id="motherGrandfather" placeholder="例：平茂勝" list="hist-motherGrandfather"></div>
+      <div class="form-group"><label>母の名前</label><input type="text" id="motherName" placeholder="例：はなこ" list="hist-motherName"></div>
       <div class="flex-row">
         <div class="form-group flex-item"><label>日齢</label><input type="number" id="days"></div>
         <div class="form-group flex-item"><label>体重(kg)</label><input type="number" id="weight"></div>
@@ -110,8 +126,8 @@
         </select>
       </div>
       <div class="flex-row" style="margin-bottom:10px;">
-        <input type="text" id="searchFather" oninput="renderList()" placeholder="父の名前で検索" class="flex-item" style="padding:12px; border-radius:8px; border:1px solid #444; background:#222; color:white;">
-        <input type="text" id="searchMother" oninput="renderList()" placeholder="母の名前で検索" class="flex-item" style="padding:12px; border-radius:8px; border:1px solid #444; background:#222; color:white;">
+        <input type="text" id="searchFather" oninput="renderList()" placeholder="父の名前で検索" class="flex-item" style="padding:12px; border-radius:8px; border:1px solid #444; background:#222; color:white;" list="hist-father">
+        <input type="text" id="searchMother" oninput="renderList()" placeholder="母の名前で検索" class="flex-item" style="padding:12px; border-radius:8px; border:1px solid #444; background:#222; color:white;" list="hist-motherName">
       </div>
     </div>
 
@@ -137,6 +153,11 @@
   </div>
 </div>
 
+<datalist id="hist-father"></datalist>
+<datalist id="hist-motherFather"></datalist>
+<datalist id="hist-motherGrandfather"></datalist>
+<datalist id="hist-motherName"></datalist>
+
 <div id="printArea">
   <div class="print-stats">
     <span>子牛管理台帳 (A4横)</span>
@@ -145,19 +166,7 @@
   <table>
     <thead>
       <tr>
-        <th style="width:3%">No</th>
-        <th style="width:9%">上場日</th>
-        <th style="width:12%">耳標番号</th>
-        <th style="width:9%">生年月日</th>
-        <th style="width:5%">性別</th>
-        <th style="width:9%">父</th>
-        <th style="width:9%">母父</th>
-        <th style="width:9%">母祖父</th>
-        <th style="width:9%">母</th>
-        <th style="width:4%">日齢</th>
-        <th style="width:4%">体重</th>
-        <th style="width:8%">価格</th>
-        <th style="width:12%">メモ</th>
+        <th style="width:3%">No</th><th style="width:9%">上場日</th><th style="width:12%">耳標番号</th><th style="width:9%">生年月日</th><th style="width:5%">性別</th><th style="width:9%">父</th><th style="width:9%">母父</th><th style="width:9%">母祖父</th><th style="width:9%">母</th><th style="width:4%">日齢</th><th style="width:4%">体重</th><th style="width:8%">価格</th><th style="width:12%">メモ</th>
       </tr>
     </thead>
     <tbody id="printTableBody"></tbody>
@@ -167,6 +176,7 @@
 <script>
   let currentFilteredList = [];
   const STORAGE_KEY = 'seri_joujou_v6'; 
+  let pendingDeleteId = null; // 削除待ちのID
 
   function formatInputDate(el) {
     let val = el.value.replace(/\D/g, '');
@@ -192,7 +202,22 @@
   window.addEventListener('load', () => {
     setTimeout(() => { document.getElementById('splash').style.opacity = '0'; setTimeout(() => document.getElementById('splash').style.display='none', 500); }, 2000);
     renderList();
+    updateHistoryLists();
   });
+
+  function updateHistoryLists() {
+    const list = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    const fields = ['father', 'motherFather', 'motherGrandfather', 'motherName'];
+    const twoYearsAgo = new Date();
+    twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
+    const limitDateStr = twoYearsAgo.getFullYear() + String(twoYearsAgo.getMonth() + 1).padStart(2, '0') + String(twoYearsAgo.getDate()).padStart(2, '0');
+    const recentList = list.filter(item => { const d = cleanDate(item.listingDate); return !d || d >= limitDateStr; });
+    fields.forEach(f => {
+      const vals = [...new Set(recentList.map(i => i[f]).filter(v => v))];
+      const dl = document.getElementById(`hist-${f}`);
+      if (dl) dl.innerHTML = vals.map(v => `<option value="${v}">`).join('');
+    });
+  }
 
   function showPage(p) {
     document.querySelectorAll('.page').forEach(x => x.classList.remove('active'));
@@ -204,17 +229,16 @@
     const fields = ['listingDate', 'earId', 'birthDate', 'gender', 'father', 'motherFather', 'motherGrandfather', 'motherName', 'days', 'weight', 'price', 'memo'];
     const id = document.getElementById('editId').value;
     const data = { id: id ? Number(id) : Date.now() };
-    
     fields.forEach(f => {
       let val = document.getElementById(f).value;
       if(f === 'listingDate' || f === 'birthDate') val = toSlashedDate(val);
       data[f] = val;
     });
-
     let list = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
     if(id) { let idx = list.findIndex(i => i.id === data.id); list[idx] = data; }
     else { list.unshift(data); }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    updateHistoryLists();
     alert("保存完了");
     clearForm();
     showPage('listPage');
@@ -230,7 +254,6 @@
   function renderList() {
     let list = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
     list.sort((a,b) => cleanDate(b.listingDate).localeCompare(cleanDate(a.listingDate)));
-
     const sS = cleanDate(document.getElementById('searchStart').value);
     const sE = cleanDate(document.getElementById('searchEnd').value);
     const sG = document.getElementById('searchGender').value; 
@@ -238,72 +261,62 @@
     const sM = document.getElementById('searchMother').value.toLowerCase();
 
     currentFilteredList = list.filter(c => {
-      const targetDate = cleanDate(c.listingDate);
-      const matchStart = !sS || (targetDate >= sS);
-      const matchEnd = !sE || (targetDate <= sE);
-      const matchGender = !sG || (c.gender === sG); 
-      const matchFather = !sF || (c.father || "").toLowerCase().includes(sF);
-      const matchMother = !sM || (c.motherName || "").toLowerCase().includes(sM);
-      return matchStart && matchEnd && matchGender && matchFather && matchMother;
+      const d = cleanDate(c.listingDate);
+      return (!sS || d >= sS) && (!sE || d <= sE) && (!sG || c.gender === sG) && 
+             (!sF || (c.father||"").toLowerCase().includes(sF)) && 
+             (!sM || (c.motherName||"").toLowerCase().includes(sM));
     });
 
-    const sum = (arr, key) => arr.filter(i => i[key] && !isNaN(i[key])).reduce((a, b) => a + Number(b[key]), 0);
-    const count = (arr, key) => arr.filter(i => i[key] && !isNaN(i[key])).length;
-    const avgD = count(currentFilteredList, 'days') ? Math.round(sum(currentFilteredList, 'days') / count(currentFilteredList, 'days')) : 0;
-    const avgW = count(currentFilteredList, 'weight') ? Math.round(sum(currentFilteredList, 'weight') / count(currentFilteredList, 'weight')) : 0;
-    const avgP = count(currentFilteredList, 'price') ? Math.round(sum(currentFilteredList, 'price') / count(currentFilteredList, 'price')) : 0;
+    const sum = (k) => currentFilteredList.filter(i => i[k] && !isNaN(i[k])).reduce((a, b) => a + Number(b[k]), 0);
+    const cnt = (k) => currentFilteredList.filter(i => i[k] && !isNaN(i[k])).length;
+    const avgD = cnt('days') ? Math.round(sum('days')/cnt('days')) : 0;
+    const avgW = cnt('weight') ? Math.round(sum('weight')/cnt('weight')) : 0;
+    const avgP = cnt('price') ? Math.round(sum('price')/cnt('price')) : 0;
 
-    document.getElementById('avgDays').innerText = avgD + "日";
-    document.getElementById('avgWeight').innerText = avgW + "kg";
-    document.getElementById('avgPrice').innerText = avgP + "千円";
-    document.getElementById('pAvgDays').innerText = avgD + "日";
-    document.getElementById('pAvgWeight').innerText = avgW + "kg";
-    document.getElementById('pAvgPrice').innerText = avgP + "千円";
+    ['avgDays','pAvgDays'].forEach(id => document.getElementById(id).innerText = avgD + "日");
+    ['avgWeight','pAvgWeight'].forEach(id => document.getElementById(id).innerText = avgW + "kg");
+    ['avgPrice','pAvgPrice'].forEach(id => document.getElementById(id).innerText = avgP + "千円");
 
     const listDiv = document.getElementById('calfList');
     listDiv.innerHTML = currentFilteredList.map(c => {
       let cls = c.gender === "去勢" ? "border-castrated" : c.gender === "雌" ? "border-female" : "border-male";
-      return `
-      <div class="calf-card ${cls}">
-        <div class="card-id">No. ${c.earId || '-'}</div>
-        <div class="card-details">
-          上場年月日：${c.listingDate || '-'}<br>
-          生年月日：${c.birthDate || '-'}<br>
-          性別：${c.gender}<br>
-          父：${c.father || '-'}<br>
-          母父：${c.motherFather || '-'}<br>
-          母祖父：${c.motherGrandfather || '-'}<br>
-          母：${c.motherName || '-'}<br>
-          日齢：${c.days || '-'}日 / 体重：${c.weight || '-'}kg<br>
-          価格：<span class="card-price">${c.price ? c.price + '千円' : '-'}</span><br>
-          メモ：${c.memo || '-'}
-        </div>
-        <div class="action-row">
-          <button class="edit-btn" onclick="editData(${c.id})">編集</button>
-          <button class="delete-btn" onclick="deleteData(${c.id})">削除</button>
-        </div>
-      </div>`;
+      let h = "";
+      if(c.listingDate) h += `上場年月日：${c.listingDate}<br>`;
+      if(c.birthDate) h += `生年月日：${c.birthDate}<br>`;
+      if(c.gender) h += `性別：${c.gender}<br>`;
+      if(c.father) h += `父：${c.father}<br>`;
+      if(c.motherFather) h += `母父：${c.motherFather}<br>`;
+      if(c.motherGrandfather) h += `母祖父：${c.motherGrandfather}<br>`;
+      if(c.motherName) h += `母：${c.motherName}<br>`;
+      let dw = []; if(c.days) dw.push(`日齢：${c.days}日`); if(c.weight) dw.push(`体重：${c.weight}kg`);
+      if(dw.length > 0) h += dw.join(' / ') + '<br>';
+      if(c.price) h += `価格：<span class="card-price">${c.price}千円</span><br>`;
+      if(c.memo) h += `メモ：${c.memo}`;
+
+      return `<div class="calf-card ${cls}"><div class="card-id">No. ${c.earId || '-'}</div><div class="card-details">${h}</div><div class="action-row"><button class="edit-btn" onclick="editData(${c.id})">編集</button><button class="delete-btn" onclick="openConfirm(${c.id})">削除</button></div></div>`;
     }).join('');
 
-    const pBody = document.getElementById('printTableBody');
-    pBody.innerHTML = currentFilteredList.map((c, i) => `
-      <tr class="${c.gender === '去勢'?'tr-castrated':c.gender === '雌'?'tr-female':'tr-male'}">
-        <td>${i + 1}</td>
-        <td>${c.listingDate || ''}</td>
-        <td>${c.earId || ''}</td>
-        <td>${c.birthDate || ''}</td>
-        <td>${c.gender || ''}</td>
-        <td>${c.father || ''}</td>
-        <td>${c.motherFather || ''}</td>
-        <td>${c.motherGrandfather || ''}</td>
-        <td>${c.motherName || ''}</td>
-        <td>${c.days || ''}</td>
-        <td>${c.weight || ''}</td>
-        <td>${c.price ? c.price + '千円' : ''}</td>
-        <td>${c.memo || ''}</td>
-      </tr>
-    `).join('');
+    document.getElementById('printTableBody').innerHTML = currentFilteredList.map((c, i) => `<tr class="${c.gender==='去勢'?'tr-castrated':c.gender==='雌'?'tr-female':'tr-male'}"><td>${i+1}</td><td>${c.listingDate||''}</td><td>${c.earId||''}</td><td>${c.birthDate||''}</td><td>${c.gender||''}</td><td>${c.father||''}</td><td>${c.motherFather||''}</td><td>${c.motherGrandfather||''}</td><td>${c.motherName||''}</td><td>${c.days||''}</td><td>${c.weight||''}</td><td>${c.price?c.price+'千円':''}</td><td>${c.memo||''}</td></tr>`).join('');
   }
+
+  // 確認ダイアログの操作
+  function openConfirm(id) {
+    pendingDeleteId = id;
+    document.getElementById('confirmModal').style.display = 'flex';
+  }
+  function closeConfirm() {
+    pendingDeleteId = null;
+    document.getElementById('confirmModal').style.display = 'none';
+  }
+  document.getElementById('modalConfirmBtn').onclick = function() {
+    if(pendingDeleteId) {
+      let list = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(list.filter(i=>i.id!==pendingDeleteId)));
+      renderList();
+      updateHistoryLists();
+    }
+    closeConfirm();
+  };
 
   function editData(id) {
     let list = JSON.parse(localStorage.getItem(STORAGE_KEY));
@@ -315,32 +328,20 @@
     showPage('inputPage');
   }
 
-  function deleteData(id) { if(confirm("削除しますか？")) { let list = JSON.parse(localStorage.getItem(STORAGE_KEY)); localStorage.setItem(STORAGE_KEY, JSON.stringify(list.filter(i=>i.id!==id))); renderList(); } }
-
-  function openPrintWindow() {
-    if(!currentFilteredList.length) { alert("データがありません"); return; }
-    setTimeout(() => { window.print(); }, 300);
-  }
+  function openPrintWindow() { if(!currentFilteredList.length) return; setTimeout(() => { window.print(); }, 300); }
 
   function exportExcel() {
     if(!currentFilteredList.length) return;
     let csv = "\uFEFFNo,上場年月日,耳標番号,生年月日,性別,父,母父,母祖父,母,日齢,体重,価格,メモ\n";
-    currentFilteredList.forEach((c, i) => {
-      csv += `${i+1},${c.listingDate},${c.earId},${c.birthDate},${c.gender},${c.father},${c.motherFather},${c.motherGrandfather},${c.motherName},${c.days},${c.weight},${c.price ? c.price + '千円' : ''},${c.memo}\n`;
-    });
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'セリ上々_出力.csv'; a.click();
+    currentFilteredList.forEach((c, i) => { csv += `${i+1},${c.listingDate},${c.earId},${c.birthDate},${c.gender},${c.father},${c.motherFather},${c.motherGrandfather},${c.motherName},${c.days},${c.weight},${c.price?c.price+'千円':''},${c.memo}\n`; });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = 'セリ上々_出力.csv'; a.click();
   }
 
-  function exportBackup() {
-    const data = localStorage.getItem(STORAGE_KEY);
-    const blob = new Blob([data], { type: 'application/json' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'seri_backup.json'; a.click();
-  }
+  function exportBackup() { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([localStorage.getItem(STORAGE_KEY)], { type: 'application/json' })); a.download = 'seri_backup.json'; a.click(); }
 
   function importBackup(e) {
     const reader = new FileReader();
-    reader.onload = (e) => { if(confirm("復元しますか？（現在のデータが上書きされます）")) { localStorage.setItem(STORAGE_KEY, e.target.result); renderList(); } };
+    reader.onload = (e) => { if(confirm("復元しますか？")) { localStorage.setItem(STORAGE_KEY, e.target.result); renderList(); updateHistoryLists(); } };
     reader.readAsText(e.target.files[0]);
   }
 </script>
